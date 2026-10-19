@@ -1,0 +1,9 @@
+.customer-site-wrapper {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.customer-main-content {
+  flex: 1;
+}

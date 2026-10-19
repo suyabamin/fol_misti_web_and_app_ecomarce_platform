@@ -1,0 +1,140 @@
+:root {
+  /* Default Theme: Fol Mishti Signature */
+  --color-primary: #156b3c;
+  --color-primary-hover: #10522e;
+  --color-primary-light: #e8f5ec;
+  --color-primary-border: #bce3cb;
+  
+  --color-accent: #fab818;
+  --color-accent-hover: #e0a312;
+  --color-accent-light: #fef7e3;
+  
+  --color-secondary: #e65100;
+  --color-secondary-hover: #cf4400;
+
+  --color-bg: #fbfbfa;
+  --color-surface: #ffffff;
+  --color-surface-subtle: #f5f7f5;
+  --color-border: #e2e8e2;
+  --color-border-subtle: #edf2ed;
+
+  --color-text: #1e2922;
+  --color-text-secondary: #58665c;
+  --color-text-muted: #85968a;
+  --color-text-light: #ffffff;
+
+  --color-success: #16a34a;
+  --color-success-light: #dcfce7;
+  --color-warning: #eab308;
+  --color-warning-light: #fef9c3;
+  --color-danger: #dc2626;
+  --color-danger-light: #fee2e2;
+  --color-info: #0284c7;
+  --color-info-light: #e0f2fe;
+
+  --font-bangla: 'Hind Siliguri', 'Noto Sans Bengali', system-ui, sans-serif;
+  --font-english: 'Poppins', system-ui, -apple-system, sans-serif;
+
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-full: 9999px;
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 12px rgba(21, 107, 60, 0.08);
+  --shadow-lg: 0 8px 24px rgba(21, 107, 60, 0.12);
+  --shadow-card: 0 2px 10px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.02);
+  --shadow-elevated: 0 12px 32px rgba(0, 0, 0, 0.12);
+
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  --container-max: 1280px;
+  --header-height: 80px;
+}
+
+/* Mango Season Theme */
+[data-theme="mango"] {
+  --color-primary: #f59e0b;
+  --color-primary-hover: #d97706;
+  --color-primary-light: #fef3c7;
+  --color-primary-border: #fde68a;
+  
+  --color-accent: #10b981;
+  --color-accent-hover: #059669;
+  --color-accent-light: #d1fae5;
+  
+  --color-secondary: #b45309;
+  --color-secondary-hover: #92400e;
+
+  --color-bg: #fffdf5;
+  --color-surface-subtle: #fefce8;
+  --color-border: #fef08a;
+  --shadow-md: 0 4px 12px rgba(245, 158, 11, 0.12);
+  --shadow-lg: 0 8px 24px rgba(245, 158, 11, 0.16);
+}
+
+/* Orange Season Theme */
+[data-theme="orange"] {
+  --color-primary: #ea580c;
+  --color-primary-hover: #c2410c;
+  --color-primary-light: #ffedd5;
+  --color-primary-border: #fed7aa;
+  
+  --color-accent: #16a34a;
+  --color-accent-hover: #15803d;
+  --color-accent-light: #dcfce7;
+  
+  --color-secondary: #9a3412;
+  --color-secondary-hover: #7c2d12;
+
+  --color-bg: #fffbf7;
+  --color-surface-subtle: #fff7ed;
+  --color-border: #ffedd5;
+  --shadow-md: 0 4px 12px rgba(234, 88, 12, 0.12);
+  --shadow-lg: 0 8px 24px rgba(234, 88, 12, 0.16);
+}
+
+/* Lychee Season Theme */
+[data-theme="lychee"] {
+  --color-primary: #e11d48;
+  --color-primary-hover: #be123c;
+  --color-primary-light: #ffe4e6;
+  --color-primary-border: #fecdd3;
+  
+  --color-accent: #059669;
+  --color-accent-hover: #047857;
+  --color-accent-light: #d1fae5;
+  
+  --color-secondary: #9f1239;
+  --color-secondary-hover: #881337;
+
+  --color-bg: #fff8f8;
+  --color-surface-subtle: #fff1f2;
+  --color-border: #ffe4e6;
+  --shadow-md: 0 4px 12px rgba(225, 29, 72, 0.12);
+  --shadow-lg: 0 8px 24px rgba(225, 29, 72, 0.16);
+}
+
+/* Mishti Theme */
+[data-theme="mishti"] {
+  --color-primary: #881337;
+  --color-primary-hover: #700f2e;
+  --color-primary-light: #fce7f3;
+  --color-primary-border: #fbcfe8;
+  
+  --color-accent: #d97706;
+  --color-accent-hover: #b45309;
+  --color-accent-light: #fef3c7;
+  
+  --color-secondary: #b45309;
+  --color-secondary-hover: #92400e;
+
+  --color-bg: #fdfaf6;
+  --color-surface-subtle: #fcf6ee;
+  --color-border: #f7e6d2;
+  --shadow-md: 0 4px 12px rgba(136, 19, 55, 0.12);
+  --shadow-lg: 0 8px 24px rgba(136, 19, 55, 0.16);
+}
