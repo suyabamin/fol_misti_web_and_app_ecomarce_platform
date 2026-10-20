@@ -97,6 +97,62 @@ class DeliveryRepository {
     localStorage.setItem(PROFILES_STORAGE_KEY, JSON.stringify(profiles));
   }
 
+  async assignUserAsDeliveryRider(user: {
+    uid: string;
+    name: string;
+    email: string;
+    phone?: string;
+    vehicleType?: DeliveryProfile['vehicleType'];
+    vehiclePlateNumber?: string;
+  }): Promise<DeliveryProfile> {
+    const existing = await this.getDeliveryProfile(user.uid);
+    if (existing) {
+      const updated: DeliveryProfile = {
+        ...existing,
+        name: user.name || existing.name,
+        email: user.email || existing.email,
+        phone: user.phone || existing.phone,
+        status: 'active',
+        availability: 'available',
+        updatedAt: new Date().toISOString()
+      };
+      await this.saveDeliveryProfile(updated);
+      return updated;
+    }
+
+    const newProfile: DeliveryProfile = {
+      id: user.uid,
+      uid: user.uid,
+      name: user.name,
+      phone: user.phone || '01712-345678',
+      email: user.email,
+      status: 'active',
+      availability: 'available',
+      currentActiveDeliveries: 0,
+      currentActiveOrderId: null,
+      vehicleType: user.vehicleType || 'motorbike',
+      vehiclePlateNumber: user.vehiclePlateNumber || 'মোটরসাইকেল (ঢাকা মেট্রো)',
+      totalCompletedDeliveries: 0,
+      totalEarnedDeliveryCharge: 0,
+      totalPaidAmount: 0,
+      outstandingPayableAmount: 0,
+      schedule: {
+        workingDays: [0, 1, 2, 3, 4, 5, 6],
+        startTime: '09:00',
+        endTime: '19:00',
+        breakStartTime: '13:00',
+        breakEndTime: '14:00',
+        isLeaveToday: false,
+        maxActiveDeliveries: 2
+      },
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    await this.saveDeliveryProfile(newProfile);
+    return newProfile;
+  }
+
   async updateAvailability(uid: string, availability: DeliveryAvailabilityStatus): Promise<void> {
     if (isFirebaseConfigured) {
       try {

@@ -3,6 +3,7 @@ import { User, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEma
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, db, googleProvider, isFirebaseConfigured } from '../services/firebase';
 import { UserProfile } from '../models';
+import { userRepository } from '../repositories/userRepository';
 
 interface AuthContextType {
   currentUser: User | null;
@@ -197,12 +198,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (isFirebaseConfigured) {
       const cred = await createUserWithEmailAndPassword(auth, email, pass);
       await fbUpdateProfile(cred.user, { displayName: name });
-      setUserProfile({
+      const profileData: UserProfile = {
         uid: cred.user.uid,
         email,
         displayName: name,
         phone,
         role: 'customer'
+      };
+      setUserProfile(profileData);
+      await userRepository.saveRegisteredUser({
+        uid: cred.user.uid,
+        name,
+        email,
+        phone: phone || '',
+        district: 'ঢাকা',
+        role: 'customer',
+        status: 'active',
+        joinedDate: new Date().toISOString().split('T')[0]
       });
     } else {
       const mockProfile: UserProfile = {
@@ -220,6 +232,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         email: mockProfile.email,
         displayName: mockProfile.displayName
       } as User);
+      await userRepository.saveRegisteredUser({
+        uid: mockProfile.uid,
+        name,
+        email,
+        phone: phone || '',
+        district: 'ঢাকা',
+        role: 'customer',
+        status: 'active',
+        joinedDate: new Date().toISOString().split('T')[0]
+      });
     }
   };
 

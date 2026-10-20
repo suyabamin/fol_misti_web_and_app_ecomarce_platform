@@ -463,3 +463,104 @@ export const INITIAL_DELIVERY_PROFILES = [
   }
 ];
 
+export interface RegisteredUserItem {
+  uid: string;
+  name: string;
+  email: string;
+  phone: string;
+  district?: string;
+  role: 'customer' | 'admin' | 'delivery';
+  ordersCount?: number;
+  totalSpent?: number;
+  status: 'active' | 'suspended';
+  joinedDate: string;
+}
+
+export const INITIAL_REGISTERED_USERS: RegisteredUserItem[] = [
+  {
+    uid: 'cust-1',
+    name: 'তানভীর আহমেদ',
+    email: 'tanvir@gmail.com',
+    phone: '01712-345678',
+    district: 'ঢাকা (ধানমন্ডি)',
+    role: 'customer',
+    ordersCount: 4,
+    totalSpent: 3840,
+    status: 'active',
+    joinedDate: '2026-02-14'
+  },
+  {
+    uid: 'cust-2',
+    name: 'নুসরাত জাহান',
+    email: 'nusrat.j@yahoo.com',
+    phone: '01819-876543',
+    district: 'চট্টগ্রাম (জিইসি)',
+    role: 'customer',
+    ordersCount: 3,
+    totalSpent: 2450,
+    status: 'active',
+    joinedDate: '2026-03-01'
+  },
+  {
+    uid: 'cust-3',
+    name: 'মাহমুদুল হাসান',
+    email: 'mahmud.h@gmail.com',
+    phone: '01911-223344',
+    district: 'রাজশাহী (বোয়ালিয়া)',
+    role: 'customer',
+    ordersCount: 6,
+    totalSpent: 6200,
+    status: 'active',
+    joinedDate: '2026-01-20'
+  },
+  {
+    uid: 'cust-4',
+    name: 'ফারহানা আক্তার',
+    email: 'farhana.akter@outlook.com',
+    phone: '01677-998877',
+    district: 'সিলেট (জিন্দাবাজার)',
+    role: 'customer',
+    ordersCount: 2,
+    totalSpent: 1850,
+    status: 'active',
+    joinedDate: '2026-04-10'
+  },
+  {
+    uid: 'customer-demo-1',
+    name: 'আহমেদ সাদিক',
+    email: 'customer@folmishti.com',
+    phone: '01711-223344',
+    district: 'ঢাকা (মিরপুর)',
+    role: 'customer',
+    ordersCount: 5,
+    totalSpent: 4200,
+    status: 'active',
+    joinedDate: '2026-01-15'
+  },
+  {
+    uid: 'delivery-agent-1',
+    name: 'মোঃ রফিকুল ইসলাম',
+    email: 'delivery@folmishti.com',
+    phone: '+880 1812-345678',
+    district: 'ঢাকা (উত্তরা)',
+    role: 'delivery',
+    ordersCount: 0,
+    totalSpent: 0,
+    status: 'active',
+    joinedDate: '2026-01-05'
+  },
+  {
+    uid: 'delivery-agent-2',
+    name: 'তানভীর আহমেদ (রাইডার)',
+    email: 'tanvir@folmishti.com',
+    phone: '+880 1912-876543',
+    district: 'ঢাকা (মিরপুর)',
+    role: 'delivery',
+    ordersCount: 0,
+    totalSpent: 0,
+    status: 'active',
+    joinedDate: '2026-02-01'
+  }
+];
+
+
