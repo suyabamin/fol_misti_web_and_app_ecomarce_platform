@@ -2,15 +2,22 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper functions
+    // =========================================================================
+    // HELPER FUNCTIONS
+    // =========================================================================
+
+    // Check if the user is authenticated with Firebase Auth
     function isAuthenticated() {
       return request.auth != null;
     }
 
+    // Check if user is the resource owner by UID
     function isOwner(userId) {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
+    // Check if user has administrative privileges
+    // Either through custom claim { admin: true } or by existing in /admins collection
     function isAdmin() {
       return isAuthenticated() && (
         request.auth.token.admin == true ||
@@ -18,82 +25,129 @@ service cloud.firestore {
       );
     }
 
-    // Admin whitelist collection
-    match /admins/{adminId} {
-      allow read: if isAuthenticated();
-      allow write: if false; // Only manageable via Cloud Functions / Admin SDK
+    // Check if user is an authorized delivery rider
+    // Either through custom claim { delivery: true } or by existing in /deliveryProfiles
+    function isDelivery() {
+      return isAuthenticated() && (
+        request.auth.token.delivery == true ||
+        exists(/databases/$(database)/documents/deliveryProfiles/$(request.auth.uid))
+      );
     }
 
-    // Users collection
+    // =========================================================================
+    // 1. ADMINS COLLECTION
+    // =========================================================================
+    match /admins/{adminId} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Only manageable via Firebase Admin SDK / Console
+    }
+
+    // =========================================================================
+    // 2. USERS & PROFILES COLLECTION
+    // =========================================================================
     match /users/{userId} {
       allow read: if isOwner(userId) || isAdmin();
-      allow create: if isOwner(userId);
+      allow create: if isOwner(userId) || isAdmin();
+      // Customers can update their own profile fields (except role/admin escalation); admins can update all
       allow update: if (isOwner(userId) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'isAdmin'])) || isAdmin();
       allow delete: if isAdmin();
     }
 
-    // Products collection - public read, admin write
+    // =========================================================================
+    // 3. PRODUCTS & CATALOG (Public read, Admin manage)
+    // =========================================================================
     match /products/{productId} {
       allow read: if true;
       allow write: if isAdmin();
     }
 
-    // Categories collection - public read, admin write
+    // =========================================================================
+    // 4. CATEGORIES (Public read, Admin manage)
+    // =========================================================================
     match /categories/{categoryId} {
       allow read: if true;
       allow write: if isAdmin();
     }
 
-    // Orders collection - customer can read their own, admin can read/write all
+    // =========================================================================
+    // 5. ORDERS COLLECTION
+    // =========================================================================
     match /orders/{orderId} {
-      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
-      // Direct client order creation is strictly validated; preferred via Cloud Functions
+      // Order is readable by: customer who placed it, assigned delivery rider, or admin
+      allow read: if isAuthenticated() && (
+        resource.data.userId == request.auth.uid ||
+        resource.data.assignedDeliveryPersonId == request.auth.uid ||
+        isAdmin()
+      );
+      // Customer can create an order for their own account
       allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
-      allow update: if isAdmin();
+      // Customer can update for receipt confirmation / cancel; rider for delivery state; admin for all
+      allow update: if isAdmin() || (
+        isAuthenticated() && (
+          resource.data.userId == request.auth.uid ||
+          resource.data.assignedDeliveryPersonId == request.auth.uid
+        )
+      );
       allow delete: if isAdmin();
     }
 
-    // Reviews collection - approved reviews are public
+    // =========================================================================
+    // 6. CUSTOMER REVIEWS & RATINGS
+    // =========================================================================
     match /reviews/{reviewId} {
+      // Approved reviews are public; customers can view their own; admin can view all
       allow read: if resource.data.status == 'approved' || (isAuthenticated() && resource.data.userId == request.auth.uid) || isAdmin();
       allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      // Customer can edit comment/rating; status moderation is admin-only
       allow update: if (isAuthenticated() && resource.data.userId == request.auth.uid && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['status'])) || isAdmin();
       allow delete: if isAdmin();
     }
 
-    // Coupons collection - public read active, admin write
+    // =========================================================================
+    // 7. COUPONS & PROMOTIONS (Public read active, Admin manage)
+    // =========================================================================
     match /coupons/{couponId} {
       allow read: if true;
       allow write: if isAdmin();
     }
 
-    // Banners collection - public read active, admin write
+    // =========================================================================
+    // 8. BANNERS (Public read active, Admin manage)
+    // =========================================================================
     match /banners/{bannerId} {
       allow read: if true;
       allow write: if isAdmin();
     }
 
-    // Settings collection (appearance, store settings)
+    // =========================================================================
+    // 9. STORE SETTINGS & THEMES (Public read, Admin manage)
+    // =========================================================================
     match /settings/{settingId} {
       allow read: if true;
       allow write: if isAdmin();
     }
 
-    // Wishlists collection - user owns their wishlist
+    // =========================================================================
+    // 10. WISHLISTS
+    // =========================================================================
     match /wishlists/{userId} {
       allow read, write: if isOwner(userId) || isAdmin();
     }
 
-    // Delivery Areas collection - public read, admin write
+    // =========================================================================
+    // 11. DELIVERY AREAS (Public read, Admin manage)
+    // =========================================================================
     match /deliveryAreas/{areaId} {
       allow read: if true;
       allow write: if isAdmin();
     }
 
-    // Delivery Profiles collection
+    // =========================================================================
+    // 12. DELIVERY PROFILES (Riders)
+    // =========================================================================
     match /deliveryProfiles/{deliveryPersonId} {
       allow read: if (isAuthenticated() && request.auth.uid == deliveryPersonId) || isAdmin();
-      // Delivery person can update only permitted fields (schedule, availability)
+      // Riders can update availability & schedule; financial totals are admin/Cloud Function protected
       allow update: if (
         isAuthenticated() &&
         request.auth.uid == deliveryPersonId &&
@@ -108,63 +162,97 @@ service cloud.firestore {
       allow create, delete: if isAdmin();
     }
 
-    // Delivery Assignments collection
+    // =========================================================================
+    // 13. DELIVERY ASSIGNMENTS
+    // =========================================================================
     match /deliveryAssignments/{orderId} {
-      allow read: if (
-        isAuthenticated() &&
-        (resource.data.deliveryPersonId == request.auth.uid ||
-         get(/databases/$(database)/documents/orders/$(orderId)).data.userId == request.auth.uid ||
-         isAdmin())
+      allow read: if isAuthenticated() && (
+        resource.data.deliveryPersonId == request.auth.uid ||
+        isAdmin() ||
+        (exists(/databases/$(database)/documents/orders/$(orderId)) &&
+         get(/databases/$(database)/documents/orders/$(orderId)).data.userId == request.auth.uid)
       );
-      allow write: if isAdmin();
+      allow write: if isAdmin() || (
+        isAuthenticated() && resource.data.deliveryPersonId == request.auth.uid
+      );
     }
 
-    // Delivery Locations - active live GPS tracking
+    // =========================================================================
+    // 14. LIVE GPS DELIVERY LOCATIONS
+    // =========================================================================
     match /deliveryLocations/{orderId} {
-      allow read: if (
-        isAuthenticated() &&
-        (resource.data.deliveryPersonId == request.auth.uid ||
-         get(/databases/$(database)/documents/orders/$(orderId)).data.userId == request.auth.uid ||
-         isAdmin())
+      allow read: if isAuthenticated() && (
+        resource.data.deliveryPersonId == request.auth.uid ||
+        resource.data.userId == request.auth.uid ||
+        isAdmin() ||
+        (exists(/databases/$(database)/documents/orders/$(orderId)) &&
+         get(/databases/$(database)/documents/orders/$(orderId)).data.userId == request.auth.uid)
       );
-      // Only the currently assigned active delivery person can update location
+      // The assigned delivery rider can transmit live coordinates; admin can manage
       allow create, update: if (
         isAuthenticated() &&
-        request.resource.data.deliveryPersonId == request.auth.uid &&
-        get(/databases/$(database)/documents/orders/$(orderId)).data.assignedDeliveryPersonId == request.auth.uid
+        request.resource.data.deliveryPersonId == request.auth.uid
       ) || isAdmin();
       allow delete: if isAdmin();
     }
 
-    // Permanent Order Archives
+    // =========================================================================
+    // 15. PERMANENT ORDER ARCHIVES
+    // =========================================================================
     match /orderArchives/{orderId} {
-      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
-      // Archives are created through trusted backend or customer receipt confirmation
-      allow create: if isAuthenticated() && (request.resource.data.userId == request.auth.uid || isAdmin());
+      // Readable by customer owner or admin
+      allow read: if isAuthenticated() && (
+        resource.data.userId == request.auth.uid ||
+        isAdmin()
+      );
+      // Created when customer independently confirms receipt or via trusted backend
+      allow create: if isAuthenticated() && (
+        request.resource.data.userId == request.auth.uid ||
+        isAdmin()
+      );
       allow update, delete: if isAdmin();
     }
 
-    // Delivery Earnings Ledger
+    // =========================================================================
+    // 16. DELIVERY EARNINGS LEDGER
+    // =========================================================================
     match /deliveryEarnings/{entryId} {
-      allow read: if isAuthenticated() && (resource.data.deliveryPersonId == request.auth.uid || isAdmin());
-      // Ledger writes are strictly managed via Cloud Functions / trusted backend
+      // Rider can inspect their own earnings; admin can view/manage all
+      allow read: if isAuthenticated() && (
+        resource.data.deliveryPersonId == request.auth.uid ||
+        isAdmin()
+      );
       allow write: if isAdmin();
     }
 
-    // Delivery Payments
+    // =========================================================================
+    // 17. DELIVERY PAYMENTS (Admin Payouts to Riders)
+    // =========================================================================
     match /deliveryPayments/{paymentId} {
-      allow read: if isAuthenticated() && (resource.data.deliveryPersonId == request.auth.uid || isAdmin());
+      // Rider can view their own payout receipts; admin can manage
+      allow read: if isAuthenticated() && (
+        resource.data.deliveryPersonId == request.auth.uid ||
+        isAdmin()
+      );
       allow write: if isAdmin();
     }
 
-    // Delivery Issues
+    // =========================================================================
+    // 18. DELIVERY DISPUTE ISSUES
+    // =========================================================================
     match /deliveryIssues/{issueId} {
-      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow read: if isAuthenticated() && (
+        resource.data.userId == request.auth.uid ||
+        resource.data.deliveryPersonId == request.auth.uid ||
+        isAdmin()
+      );
       allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
       allow update, delete: if isAdmin();
     }
 
-    // Support Conversations - customer owns or admin manages
+    // =========================================================================
+    // 19. REAL-TIME CUSTOMER LIVE SUPPORT CHAT
+    // =========================================================================
     match /supportConversations/{convId} {
       allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
       allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
@@ -184,5 +272,6 @@ service cloud.firestore {
         allow update, delete: if isAdmin();
       }
     }
+
   }
 }
