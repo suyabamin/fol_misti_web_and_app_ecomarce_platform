@@ -59,8 +59,15 @@ export const orderRepository = {
         if (d.exists()) {
           return { id: d.id, ...d.data() } as Order;
         }
+
+        // Also query by orderNumber in Firestore if passed human-readable ID
+        const qSnap = await getDocs(query(collection(db, 'orders'), where('orderNumber', '==', orderId)));
+        if (!qSnap.empty) {
+          const first = qSnap.docs[0];
+          return { id: first.id, ...first.data() } as Order;
+        }
       } catch (err) {
-        console.warn(err);
+        console.warn('Firestore getById query error:', err);
       }
     }
     const orders = getLocalOrders();

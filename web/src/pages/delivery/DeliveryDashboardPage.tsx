@@ -9,17 +9,33 @@ import {
   AlertCircle,
   Navigation,
   DollarSign,
-  PackageCheck
+  PackageCheck,
+  Calendar,
+  Save,
+  Edit3,
+  CheckCircle2,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { deliveryRepository } from '../../repositories/deliveryRepository';
 import { orderRepository } from '../../repositories/orderRepository';
-import { Order, DeliveryProfile } from '../../models';
+import { Order, DeliveryProfile, DeliverySchedule } from '../../models';
 
 interface ContextType {
   profile: DeliveryProfile | null;
   reloadProfile: () => void;
 }
+
+const DAYS_OF_WEEK = [
+  { id: 0, nameBn: 'রবি', fullBn: 'রবিবার' },
+  { id: 1, nameBn: 'সোম', fullBn: 'সোমবার' },
+  { id: 2, nameBn: 'মঙ্গল', fullBn: 'মঙ্গলবার' },
+  { id: 3, nameBn: 'বুধ', fullBn: 'বুধবার' },
+  { id: 4, nameBn: 'বৃহঃ', fullBn: 'বৃহস্পতিবার' },
+  { id: 5, nameBn: 'শুক্র', fullBn: 'শুক্রবার' },
+  { id: 6, nameBn: 'শনি', fullBn: 'শনিবার' }
+];
 
 export const DeliveryDashboardPage: React.FC = () => {
   const { currentUser } = useAuth();
@@ -31,6 +47,68 @@ export const DeliveryDashboardPage: React.FC = () => {
   const [gpsActiveOrderId, setGpsActiveOrderId] = useState<string | null>(null);
 
   const geoWatchIdRef = useRef<number | null>(null);
+
+  // Schedule inline editing state
+  const [showScheduleEditor, setShowScheduleEditor] = useState(false);
+  const [scheduleWorkingDays, setScheduleWorkingDays] = useState<number[]>([0, 1, 2, 3, 4, 5, 6]);
+  const [scheduleStartTime, setScheduleStartTime] = useState('09:00');
+  const [scheduleEndTime, setScheduleEndTime] = useState('19:00');
+  const [scheduleBreakStart, setScheduleBreakStart] = useState('13:00');
+  const [scheduleBreakEnd, setScheduleBreakEnd] = useState('14:00');
+  const [scheduleIsLeave, setScheduleIsLeave] = useState(false);
+  const [scheduleMaxActive, setScheduleMaxActive] = useState(2);
+  const [savingSchedule, setSavingSchedule] = useState(false);
+  const [scheduleSavedMsg, setScheduleSavedMsg] = useState(false);
+
+  useEffect(() => {
+    if (profile?.schedule) {
+      setScheduleWorkingDays(profile.schedule.workingDays || [0, 1, 2, 3, 4, 5, 6]);
+      setScheduleStartTime(profile.schedule.startTime || '09:00');
+      setScheduleEndTime(profile.schedule.endTime || '19:00');
+      setScheduleBreakStart(profile.schedule.breakStartTime || '13:00');
+      setScheduleBreakEnd(profile.schedule.breakEndTime || '14:00');
+      setScheduleIsLeave(Boolean(profile.schedule.isLeaveToday));
+      setScheduleMaxActive(profile.schedule.maxActiveDeliveries || 2);
+    }
+  }, [profile]);
+
+  const toggleScheduleDay = (dayId: number) => {
+    if (scheduleWorkingDays.includes(dayId)) {
+      setScheduleWorkingDays(scheduleWorkingDays.filter(d => d !== dayId));
+    } else {
+      setScheduleWorkingDays([...scheduleWorkingDays, dayId].sort());
+    }
+  };
+
+  const handleSaveSchedule = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const riderUid = currentUser?.uid || profile?.uid || 'delivery-agent-1';
+    setSavingSchedule(true);
+    try {
+      const updatedSchedule: DeliverySchedule = {
+        workingDays: scheduleWorkingDays,
+        startTime: scheduleStartTime,
+        endTime: scheduleEndTime,
+        breakStartTime: scheduleBreakStart,
+        breakEndTime: scheduleBreakEnd,
+        isLeaveToday: scheduleIsLeave,
+        maxActiveDeliveries: Number(scheduleMaxActive)
+      };
+      await deliveryRepository.updateSchedule(riderUid, updatedSchedule);
+      if (scheduleIsLeave) {
+        await deliveryRepository.updateAvailability(riderUid, 'unavailable');
+      }
+      reloadProfile();
+      setScheduleSavedMsg(true);
+      setTimeout(() => {
+        setScheduleSavedMsg(false);
+      }, 2500);
+    } catch (err: any) {
+      alert(err.message || 'শিডিউল সেভ করতে সমস্যা হয়েছে।');
+    } finally {
+      setSavingSchedule(false);
+    }
+  };
 
   useEffect(() => {
     loadOrders();
@@ -225,6 +303,191 @@ export const DeliveryDashboardPage: React.FC = () => {
             ৳{profile?.outstandingPayableAmount || 0}
           </div>
         </div>
+      </div>
+
+      {/* INLINE WORK SCHEDULE CARD & EDITOR */}
+      <div
+        style={{
+          background: 'var(--color-surface)',
+          border: '1px solid var(--color-border)',
+          borderRadius: 'var(--radius-xl)',
+          padding: '1.25rem 1.5rem',
+          marginBottom: '2rem',
+          boxShadow: 'var(--shadow-sm)'
+        }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'var(--color-primary-light)', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Calendar size={20} />
+            </div>
+            <div>
+              <div style={{ fontWeight: 800, fontSize: '1.05rem', color: 'var(--color-text)' }}>
+                আমার কাজের শিডিউল ও সময়সূচী
+              </div>
+              <div style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)', display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginTop: '0.2rem' }}>
+                <span>
+                  <strong>শিফট:</strong> {scheduleStartTime} - {scheduleEndTime}
+                </span>
+                <span>•</span>
+                <span>
+                  <strong>বিরতি:</strong> {scheduleBreakStart} - {scheduleBreakEnd}
+                </span>
+                <span>•</span>
+                <span style={{ color: scheduleIsLeave ? '#dc2626' : '#16a34a', fontWeight: 700 }}>
+                  {scheduleIsLeave ? 'আজ ছুটিতে' : 'আজ কর্মরত'}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setShowScheduleEditor(!showScheduleEditor)}
+            className="btn btn-outline btn-sm"
+            style={{ gap: '0.4rem', fontWeight: 700 }}
+          >
+            <Edit3 size={15} />
+            <span>{showScheduleEditor ? 'এডিটর বন্ধ করুন' : 'শিডিউল এডিট করুন'}</span>
+            {showScheduleEditor ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+          </button>
+        </div>
+
+        {scheduleSavedMsg && (
+          <div style={{ marginTop: '1rem', padding: '0.75rem 1rem', background: 'var(--color-primary-light)', color: 'var(--color-primary)', borderRadius: 'var(--radius-md)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
+            <CheckCircle2 size={16} />
+            <span>আপনার কাজের শিডিউল সফলভাবে ডাটাবেজে আপডেট হয়েছে!</span>
+          </div>
+        )}
+
+        {/* Expandable Form */}
+        {showScheduleEditor && (
+          <form onSubmit={handleSaveSchedule} style={{ marginTop: '1.25rem', paddingTop: '1.25rem', borderTop: '1px solid var(--color-border)' }}>
+            {/* Working Days Selector */}
+            <div style={{ marginBottom: '1.25rem' }}>
+              <label style={{ display: 'block', fontWeight: 700, fontSize: '0.85rem', marginBottom: '0.5rem' }}>
+                কাজের দিনসমূহ নির্ধারণ করুন (Working Days)
+              </label>
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                {DAYS_OF_WEEK.map((d) => {
+                  const isSelected = scheduleWorkingDays.includes(d.id);
+                  return (
+                    <button
+                      key={d.id}
+                      type="button"
+                      onClick={() => toggleScheduleDay(d.id)}
+                      style={{
+                        padding: '0.4rem 0.85rem',
+                        borderRadius: 'var(--radius-full)',
+                        border: isSelected ? '1.5px solid var(--color-primary)' : '1px solid var(--color-border)',
+                        background: isSelected ? 'var(--color-primary)' : 'var(--color-surface)',
+                        color: isSelected ? '#fff' : 'var(--color-text)',
+                        fontWeight: 700,
+                        fontSize: '0.85rem',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s'
+                      }}
+                    >
+                      {d.fullBn}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Shift & Break Times */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '1rem', marginBottom: '1.25rem' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.3rem' }}>
+                  শিফট শুরু
+                </label>
+                <input
+                  type="time"
+                  className="form-input"
+                  value={scheduleStartTime}
+                  onChange={(e) => setScheduleStartTime(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.3rem' }}>
+                  শিফট সমাপ্তি
+                </label>
+                <input
+                  type="time"
+                  className="form-input"
+                  value={scheduleEndTime}
+                  onChange={(e) => setScheduleEndTime(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.3rem' }}>
+                  বিরতি শুরু
+                </label>
+                <input
+                  type="time"
+                  className="form-input"
+                  value={scheduleBreakStart}
+                  onChange={(e) => setScheduleBreakStart(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.3rem' }}>
+                  বিরতি সমাপ্তি
+                </label>
+                <input
+                  type="time"
+                  className="form-input"
+                  value={scheduleBreakEnd}
+                  onChange={(e) => setScheduleBreakEnd(e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+
+            {/* Leave Toggle & Max Active */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem', background: 'var(--color-surface-subtle)', padding: '0.75rem 1rem', borderRadius: 'var(--radius-md)' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontWeight: 700, fontSize: '0.85rem' }}>
+                <input
+                  type="checkbox"
+                  checked={scheduleIsLeave}
+                  onChange={(e) => setScheduleIsLeave(e.target.checked)}
+                  style={{ width: '18px', height: '18px', accentColor: 'var(--color-danger)' }}
+                />
+                <span>আজকে ছুটি নিতে চাই (On Leave Today)</span>
+              </label>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
+                <span style={{ fontWeight: 600 }}>একসাথে সর্বোচ্চ অর্ডার:</span>
+                <select
+                  className="form-select"
+                  style={{ width: '110px', padding: '0.3rem 0.5rem' }}
+                  value={scheduleMaxActive}
+                  onChange={(e) => setScheduleMaxActive(Number(e.target.value))}
+                >
+                  <option value={1}>১ টি</option>
+                  <option value={2}>২ টি</option>
+                  <option value={3}>৩ টি</option>
+                </select>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
+              <button type="button" onClick={() => setShowScheduleEditor(false)} className="btn btn-outline btn-sm">
+                বাতিল
+              </button>
+              <button type="submit" disabled={savingSchedule} className="btn btn-primary btn-sm" style={{ gap: '0.4rem', fontWeight: 700 }}>
+                <Save size={15} />
+                <span>{savingSchedule ? 'সংরক্ষণ হচ্ছে...' : 'শিডিউল সেভ করুন'}</span>
+              </button>
+            </div>
+          </form>
+        )}
       </div>
 
       {/* Active Deliveries List */}

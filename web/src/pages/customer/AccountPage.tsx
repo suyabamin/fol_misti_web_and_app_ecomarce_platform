@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { User, Package, MapPin, Heart, LogOut, Settings, CheckCircle, Shield } from 'lucide-react';
+import { User, Package, MapPin, Heart, LogOut, Settings, CheckCircle, Shield, Truck } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useWishlist } from '../../context/WishlistContext';
 import { orderRepository } from '../../repositories/orderRepository';
 import { Order } from '../../models';
 
 export const AccountPage: React.FC = () => {
-  const { currentUser, userProfile, logout, updateUserDisplayName, isAdmin } = useAuth();
+  const { currentUser, userProfile, logout, updateUserDisplayName, isAdmin, isDeliveryPerson } = useAuth();
   const { wishlist } = useWishlist();
   const navigate = useNavigate();
 
@@ -84,6 +84,17 @@ export const AccountPage: React.FC = () => {
             <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
               {currentUser?.email}
             </span>
+            {isDeliveryPerson && (
+              <div style={{ marginTop: '0.65rem' }}>
+                <Link
+                  to="/delivery"
+                  className="btn btn-primary btn-sm"
+                  style={{ gap: '0.4rem', width: '100%', justifyContent: 'center', fontWeight: 700, fontSize: '0.8rem' }}
+                >
+                  <Truck size={14} /> ডেলিভারি ড্যাশবোর্ড
+                </Link>
+              </div>
+            )}
             {isAdmin && (
               <div style={{ marginTop: '0.5rem' }}>
                 <Link to="/admin" className="badge badge-accent" style={{ textDecoration: 'none' }}>

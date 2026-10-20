@@ -21,7 +21,14 @@ export const DeliveryLayout: React.FC = () => {
   const [updatingAvailability, setUpdatingAvailability] = useState(false);
   const navigate = useNavigate();
 
-  const isAuthorized = isDeliveryPerson || isAdmin;
+  const isAuthorized = Boolean(
+    isDeliveryPerson ||
+    isAdmin ||
+    userProfile?.role === 'delivery' ||
+    userProfile?.role === 'admin' ||
+    currentUser?.email === 'delivery@folmishti.com' ||
+    currentUser?.email === 'admin@folmishti.com'
+  );
 
   useEffect(() => {
     if (currentUser?.uid && isAuthorized) {

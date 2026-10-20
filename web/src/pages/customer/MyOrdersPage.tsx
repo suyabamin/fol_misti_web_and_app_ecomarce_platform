@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Package, ArrowRight, Eye, Truck, Clock } from 'lucide-react';
+import { Package, ArrowRight, Eye, Truck, Clock, Navigation, CheckCircle2, Star } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { orderRepository } from '../../repositories/orderRepository';
 import { Order, OrderStatus } from '../../models';
@@ -153,21 +153,47 @@ export const MyOrdersPage: React.FC = () => {
               </div>
 
               {/* Actions row */}
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', borderTop: '1px dashed var(--color-border-subtle)', paddingTop: '0.75rem' }}>
-                <Link
-                  to={`/order-tracking?orderId=${order.orderNumber}`}
-                  className="btn btn-subtle btn-sm"
-                  style={{ gap: '0.35rem' }}
-                >
-                  <Truck size={15} /> ট্র্যাক করুন
-                </Link>
-                <Link
-                  to={`/order/${order.id}`}
-                  className="btn btn-outline btn-sm"
-                  style={{ gap: '0.35rem' }}
-                >
-                  <Eye size={15} /> বিস্তারিত দেখুন
-                </Link>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', borderTop: '1px dashed var(--color-border-subtle)', paddingTop: '0.75rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  {(order.status === 'out_for_delivery' || order.status === 'handed_over' || order.status === 'assigned') && (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.8rem', color: '#16a34a', fontWeight: 700 }}>
+                      <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#16a34a', animation: 'pulse 1.5s infinite' }} />
+                      লাইভ ট্র্যাকিং সক্রিয়
+                    </span>
+                  )}
+                </div>
+
+                <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
+                  {/* 1-Click Track Button */}
+                  <Link
+                    to={`/order/${order.id}?track=true`}
+                    className="btn btn-primary btn-sm"
+                    style={{ gap: '0.35rem', background: 'linear-gradient(135deg, #18794E 0%, #105C3A 100%)', fontWeight: 700 }}
+                  >
+                    <Navigation size={14} />
+                    <span>১-ক্লিকে লাইভ ট্র্যাকিং</span>
+                  </Link>
+
+                  {/* 1-Click Confirm Receipt if delivered or in transit */}
+                  {(!['receipt_confirmed', 'delivered', 'cancelled'].includes(order.status)) && (
+                    <Link
+                      to={`/order/${order.id}`}
+                      className="btn btn-outline btn-sm"
+                      style={{ gap: '0.35rem', borderColor: '#16a34a', color: '#16a34a', fontWeight: 700 }}
+                    >
+                      <CheckCircle2 size={14} />
+                      <span>পণ্য পেয়েছি? নিশ্চিত করুন</span>
+                    </Link>
+                  )}
+
+                  <Link
+                    to={`/order/${order.id}`}
+                    className="btn btn-subtle btn-sm"
+                    style={{ gap: '0.35rem' }}
+                  >
+                    <Eye size={14} /> বিস্তারিত
+                  </Link>
+                </div>
               </div>
             </div>
           ))}

@@ -22,10 +22,10 @@ export const LoginPage: React.FC = () => {
     setLoading(true);
 
     try {
-      await login(email, password);
-      if (email === 'admin@folmishti.com') {
+      const profile = await login(email, password);
+      if (profile.role === 'admin' || email === 'admin@folmishti.com') {
         navigate('/admin');
-      } else if (email === 'delivery@folmishti.com') {
+      } else if (profile.role === 'delivery' || email === 'delivery@folmishti.com') {
         navigate('/delivery');
       } else {
         navigate(from, { replace: true });
@@ -44,10 +44,10 @@ export const LoginPage: React.FC = () => {
     setError(null);
     setLoading(true);
     try {
-      await login(demoEmail, 'Password123!');
-      if (demoEmail === 'admin@folmishti.com') {
+      const profile = await login(demoEmail, 'Password123!');
+      if (profile.role === 'admin' || demoEmail === 'admin@folmishti.com') {
         navigate('/admin');
-      } else if (demoEmail === 'delivery@folmishti.com') {
+      } else if (profile.role === 'delivery' || demoEmail === 'delivery@folmishti.com') {
         navigate('/delivery');
       } else {
         navigate('/account');

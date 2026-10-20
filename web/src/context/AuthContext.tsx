@@ -4,6 +4,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { auth, db, googleProvider, isFirebaseConfigured } from '../services/firebase';
 import { UserProfile } from '../models';
 import { userRepository } from '../repositories/userRepository';
+import { deliveryRepository } from '../repositories/deliveryRepository';
 
 interface AuthContextType {
   currentUser: User | null;
@@ -11,7 +12,7 @@ interface AuthContextType {
   isAdmin: boolean;
   isDeliveryPerson: boolean;
   loading: boolean;
-  login: (email: string, pass: string) => Promise<void>;
+  login: (email: string, pass: string) => Promise<UserProfile>;
   register: (name: string, email: string, pass: string, phone?: string) => Promise<void>;
   loginWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
@@ -115,7 +116,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
-  const login = async (email: string, pass: string) => {
+  const login = async (email: string, pass: string): Promise<UserProfile> => {
     // Special admin login bypass for development/testing if needed
     if (email === 'admin@folmishti.com') {
       const adminProfile: UserProfile = {
@@ -133,7 +134,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         email: adminProfile.email,
         displayName: adminProfile.displayName
       } as User);
-      return;
+      return adminProfile;
     }
 
     // Special delivery rider login bypass for development/testing
@@ -153,18 +154,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         email: deliveryProfile.email,
         displayName: deliveryProfile.displayName
       } as User);
-      return;
+      return deliveryProfile;
     }
 
     if (isFirebaseConfigured) {
       const cred = await signInWithEmailAndPassword(auth, email, pass);
       let isAdminUser = false;
+      let isDeliveryUser = false;
+
       try {
         const tokenResult = await cred.user.getIdTokenResult();
         isAdminUser = Boolean(tokenResult.claims.admin);
+        isDeliveryUser = Boolean(tokenResult.claims.delivery);
       } catch {
         // ignore
       }
+
       if (!isAdminUser) {
         try {
           const adminDoc = await getDoc(doc(db, 'admins', cred.user.uid));
@@ -175,22 +180,79 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           // ignore
         }
       }
+
+      if (!isAdminUser && !isDeliveryUser) {
+        try {
+          const riderDoc = await getDoc(doc(db, 'deliveryProfiles', cred.user.uid));
+          if (riderDoc.exists() && riderDoc.data()?.status === 'active') {
+            isDeliveryUser = true;
+          }
+        } catch {
+          // ignore
+        }
+      }
+
       setIsAdmin(isAdminUser);
-    } else {
-      const mockProfile: UserProfile = {
-        uid: 'user-' + Date.now(),
-        email,
-        displayName: email.split('@')[0],
-        role: 'customer'
+      setIsDeliveryPerson(isDeliveryUser);
+
+      const resolvedRole: 'admin' | 'delivery' | 'customer' = isAdminUser ? 'admin' : isDeliveryUser ? 'delivery' : 'customer';
+      const resolvedProfile: UserProfile = {
+        uid: cred.user.uid,
+        email: cred.user.email || email,
+        displayName: cred.user.displayName || (isDeliveryUser ? 'ডেলিভারি রাইডার' : 'সম্মানিত গ্রাহক'),
+        role: resolvedRole
       };
+      setUserProfile(resolvedProfile);
+      return resolvedProfile;
+    } else {
+      // Local / Demo Mode check
+      let resolvedRole: 'admin' | 'delivery' | 'customer' = 'customer';
+      let resolvedUid = 'user-' + Date.now();
+      let resolvedName = email.split('@')[0];
+
+      // Check if this user is a delivery profile
+      try {
+        const profiles = await deliveryRepository.getDeliveryProfiles();
+        const matchedRider = profiles.find(p => p.email.toLowerCase() === email.toLowerCase());
+        if (matchedRider) {
+          resolvedRole = 'delivery';
+          resolvedUid = matchedRider.uid || matchedRider.id;
+          resolvedName = matchedRider.name;
+        }
+      } catch {}
+
+      if (resolvedRole === 'customer') {
+        try {
+          const registeredUsers = await userRepository.getRegisteredUsers();
+          const matchedUser = registeredUsers.find(u => u.email.toLowerCase() === email.toLowerCase());
+          if (matchedUser) {
+            resolvedRole = matchedUser.role;
+            resolvedUid = matchedUser.uid;
+            resolvedName = matchedUser.name;
+          }
+        } catch {}
+      }
+
+      const isDeliv = resolvedRole === 'delivery';
+      const isAdm = resolvedRole === 'admin';
+
+      const mockProfile: UserProfile = {
+        uid: resolvedUid,
+        email,
+        displayName: resolvedName,
+        role: resolvedRole
+      };
+
       localStorage.setItem(DEMO_USER_KEY, JSON.stringify(mockProfile));
       setUserProfile(mockProfile);
-      setIsAdmin(false);
+      setIsAdmin(isAdm);
+      setIsDeliveryPerson(isDeliv);
       setCurrentUser({
         uid: mockProfile.uid,
         email: mockProfile.email,
         displayName: mockProfile.displayName
       } as User);
+      return mockProfile;
     }
   };
 

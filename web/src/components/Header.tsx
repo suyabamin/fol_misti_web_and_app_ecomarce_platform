@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, Heart, ShoppingBag, User as UserIcon, Menu, X, Shield, PhoneCall } from 'lucide-react';
+import { Search, Heart, ShoppingBag, User as UserIcon, Menu, X, Shield, PhoneCall, Truck } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
 import { useAuth } from '../context/AuthContext';
@@ -13,7 +13,7 @@ export const Header: React.FC = () => {
 
   const { itemCount, subtotal } = useCart();
   const { wishlist } = useWishlist();
-  const { currentUser, isAdmin } = useAuth();
+  const { currentUser, isAdmin, isDeliveryPerson } = useAuth();
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -99,13 +99,13 @@ export const Header: React.FC = () => {
           {currentUser ? (
             <div className="user-logged-wrap">
               <Link
-                to={isAdmin ? '/admin' : '/account'}
+                to={isAdmin ? '/admin' : isDeliveryPerson ? '/delivery' : '/account'}
                 className="action-item user-btn"
-                title="আমার একাউন্ট"
+                title={isAdmin ? 'অ্যাডমিন ড্যাশবোর্ড' : isDeliveryPerson ? 'ডেলিভারি ড্যাশবোর্ড' : 'আমার একাউন্ট'}
               >
-                <UserIcon size={22} />
+                {isDeliveryPerson ? <Truck size={22} style={{ color: '#16a34a' }} /> : <UserIcon size={22} />}
                 <span className="action-label">
-                  {isAdmin ? 'অ্যাডমিন' : 'একাউন্ট'}
+                  {isAdmin ? 'অ্যাডমিন' : isDeliveryPerson ? 'ডেলিভারি' : 'একাউন্ট'}
                 </span>
               </Link>
             </div>
@@ -146,6 +146,13 @@ export const Header: React.FC = () => {
             <li>
               <Link to="/contact" onClick={() => setMobileMenuOpen(false)}>যোগাযোগ</Link>
             </li>
+            {isDeliveryPerson && (
+              <li className="delivery-nav-item" style={{ background: 'rgba(24, 121, 78, 0.12)', borderRadius: 'var(--radius-sm)' }}>
+                <Link to="/delivery" onClick={() => setMobileMenuOpen(false)} style={{ color: 'var(--color-primary)', fontWeight: 700 }}>
+                  <Truck size={16} /> ডেলিভারি ড্যাশবোর্ড
+                </Link>
+              </li>
+            )}
             {isAdmin && (
               <li className="admin-nav-item">
                 <Link to="/admin" onClick={() => setMobileMenuOpen(false)}>

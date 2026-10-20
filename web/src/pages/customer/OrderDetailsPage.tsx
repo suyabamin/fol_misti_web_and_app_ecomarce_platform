@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, useSearchParams, Link } from 'react-router-dom';
 import {
   Package,
   Truck,
@@ -21,6 +21,7 @@ import { LiveOrderTrackingMap } from '../../components/LiveOrderTrackingMap';
 
 export const OrderDetailsPage: React.FC = () => {
   const { orderId } = useParams<{ orderId: string }>();
+  const [searchParams] = useSearchParams();
   const { currentUser } = useAuth();
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
@@ -52,8 +53,8 @@ export const OrderDetailsPage: React.FC = () => {
     try {
       const ord = await orderRepository.getById(orderId);
       setOrder(ord);
-      // Auto-open live map if out for delivery
-      if (ord?.status === 'out_for_delivery') {
+      // Auto-open live map if tracking requested or order in transit
+      if (ord && (ord.status === 'out_for_delivery' || ord.status === 'handed_over' || ord.status === 'assigned' || searchParams.get('track') === 'true')) {
         setShowMap(true);
       }
     } catch (err) {
@@ -64,12 +65,13 @@ export const OrderDetailsPage: React.FC = () => {
   };
 
   const handleConfirmReceipt = async () => {
-    if (!order || !currentUser?.uid) return;
+    if (!order) return;
+    const customerUid = currentUser?.uid || order.userId || 'customer-verified';
     if (!window.confirm('আপনি কি নিশ্চিত যে আপনি পণ্যগুলো সঠিকভাবে বুঝে পেয়েছেন?')) return;
 
     setConfirming(true);
     try {
-      await deliveryRepository.confirmCustomerReceipt(order.id, currentUser.uid);
+      await deliveryRepository.confirmCustomerReceipt(order.id, customerUid);
       await loadOrder();
       setShowRatingModal(true);
     } catch (err: any) {
@@ -83,23 +85,32 @@ export const OrderDetailsPage: React.FC = () => {
     e.preventDefault();
     if (!order) return;
     setRatingSubmitting(true);
+    const customerUid = currentUser?.uid || order.userId || 'customer-verified';
+    const customerName = currentUser?.displayName || order.deliveryAddress.fullName || 'সম্মানিত গ্রাহক';
+
     try {
+      // 1. Submit rating to permanent order archive
       await deliveryRepository.submitArchiveRating(order.id, productRating, deliveryRating, reviewComment);
-      // Also register review in public review collection for first item
-      if (order.items[0]?.productId) {
-        await reviewRepository.createReview({
-          productId: order.items[0].productId,
-          productName: order.items[0].nameBn,
-          userId: currentUser?.uid || 'guest',
-          userName: currentUser?.displayName || 'গ্রাহক',
-          rating: productRating,
-          comment: reviewComment || 'পণ্য ও মিষ্টির স্বাদ অত্যন্ত চমৎকার।'
-        });
+
+      // 2. Register public product review in Firestore/local database for items
+      if (order.items && order.items.length > 0) {
+        for (const item of order.items) {
+          await reviewRepository.createReview({
+            productId: item.productId,
+            productName: item.nameBn,
+            userId: customerUid,
+            userName: customerName,
+            rating: productRating,
+            comment: reviewComment || 'পণ্য অত্যন্ত তাজা ও মিষ্টির স্বাদ খুব চমৎকার ছিল।'
+          });
+        }
       }
+
       setRatingSubmitted(true);
+      await loadOrder();
       setTimeout(() => setShowRatingModal(false), 2000);
     } catch (err) {
-      console.error(err);
+      console.error('Failed to submit review and rating:', err);
     } finally {
       setRatingSubmitting(false);
     }
@@ -200,11 +211,11 @@ export const OrderDetailsPage: React.FC = () => {
       )}
 
       {/* CRITICAL: Handover Notification & Customer Receipt Confirmation Actions */}
-      {isHandedOver && (
+      {(!isReceiptConfirmed && order.status !== 'cancelled' && (isHandedOver || isOutForDelivery || order.status === 'assigned' || order.status === 'shipped')) && (
         <div
           style={{
             background: 'var(--color-surface)',
-            border: '2px solid var(--color-primary)',
+            border: isHandedOver ? '2px solid var(--color-primary)' : '1.5px solid var(--color-border)',
             borderRadius: 'var(--radius-xl)',
             padding: '1.5rem',
             marginBottom: '2rem',
@@ -212,23 +223,25 @@ export const OrderDetailsPage: React.FC = () => {
           }}
         >
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
-            <span style={{ fontSize: '2.5rem' }}>📦</span>
+            <span style={{ fontSize: '2.5rem' }}>{isHandedOver ? '📦' : '🚚'}</span>
             <div style={{ flex: 1 }}>
               <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--color-text)', marginBottom: '0.35rem' }}>
-                পণ্য হস্তান্তর সম্পন্ন হয়েছে!
+                {isHandedOver ? 'পণ্য হস্তান্তর সম্পন্ন হয়েছে!' : 'পণ্য কি আপনার হাতে পৌঁছেছে?'}
               </h3>
               <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.95rem', marginBottom: '1.25rem', lineHeight: 1.5 }}>
-                ডেলিভারি রাইডার পণ্যটি আপনার ঠিকানায় হস্তান্তর করেছেন। আপনি কি আপনার অর্ডারের সকল ফল ও মিষ্টি সঠিকভাবে বুঝে পেয়েছেন?
+                {isHandedOver
+                  ? 'ডেলিভারি রাইডার পণ্যটি আপনার ঠিকানায় হস্তান্তর হিসেবে চিহ্নিত করেছেন। আপনি কি আপনার অর্ডারের সকল ফল ও মিষ্টি সঠিকভাবে বুঝে পেয়েছেন?'
+                  : 'ডেলিভারি রাইডার আপনার ঠিকানায় পণ্য পৌঁছে দেওয়ার পর নিচের বাটনে ক্লিক করে রিসিভ নিশ্চিত করুন ও আপনার মূল্যবান রেটিং ও মন্তব্য দিন।'}
               </p>
               <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
                 <button
                   className="btn btn-primary btn-md"
                   disabled={confirming}
                   onClick={handleConfirmReceipt}
-                  style={{ gap: '0.5rem', fontWeight: 700 }}
+                  style={{ gap: '0.5rem', fontWeight: 700, background: 'linear-gradient(135deg, #18794E 0%, #105C3A 100%)' }}
                 >
                   <CheckCircle2 size={18} />
-                  <span>{confirming ? 'নিশ্চিত হচ্ছে...' : 'হ্যাঁ, আমি পণ্য গ্রহণ করেছি (Confirm Receipt)'}</span>
+                  <span>{confirming ? 'নিশ্চিত হচ্ছে...' : 'হ্যাঁ, আমি পণ্য গ্রহণ করেছি (Confirm Receipt & Rate)'}</span>
                 </button>
                 <button
                   className="btn btn-outline btn-md"
