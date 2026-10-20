@@ -129,5 +129,9 @@ export const reviewRepository = {
     }
     const list = getLocalReviews().filter(r => r.id !== reviewId);
     saveLocalReviews(list);
+  },
+
+  async createReview(review: Omit<Review, 'id' | 'createdAt' | 'status'>): Promise<Review> {
+    return this.submitReview(review);
   }
 };

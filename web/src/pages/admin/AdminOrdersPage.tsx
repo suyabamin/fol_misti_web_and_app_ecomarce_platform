@@ -94,6 +94,7 @@ export const AdminOrdersPage: React.FC = () => {
               <th>অর্ডার নম্বর</th>
               <th>তারিখ</th>
               <th>গ্রাহকের তথ্য</th>
+              <th>রাইডার</th>
               <th>পণ্য সংখ্যা</th>
               <th>মূল্য (৳)</th>
               <th>পেমেন্ট</th>
@@ -104,7 +105,7 @@ export const AdminOrdersPage: React.FC = () => {
           <tbody>
             {filteredOrders.length === 0 ? (
               <tr>
-                <td colSpan={8} style={{ textAlign: 'center', padding: '3rem', color: 'var(--color-text-muted)' }}>
+                <td colSpan={9} style={{ textAlign: 'center', padding: '3rem', color: 'var(--color-text-muted)' }}>
                   কোনো অর্ডার খুঁজে পাওয়া যায়নি।
                 </td>
               </tr>
@@ -120,6 +121,17 @@ export const AdminOrdersPage: React.FC = () => {
                   <td>
                     <strong style={{ fontSize: '0.9rem', display: 'block' }}>{ord.deliveryAddress.fullName}</strong>
                     <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>{ord.deliveryAddress.phone}</span>
+                  </td>
+                  <td>
+                    {ord.assignedDeliveryPersonName ? (
+                      <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#16a34a' }}>
+                        🏍️ {ord.assignedDeliveryPersonName}
+                      </span>
+                    ) : (
+                      <Link to={`/admin/order/${ord.id}`} className="btn btn-outline btn-sm" style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem' }}>
+                        + রাইডার নিয়োগ
+                      </Link>
+                    )}
                   </td>
                   <td>{ord.items.length} টি</td>
                   <td>
@@ -138,9 +150,14 @@ export const AdminOrdersPage: React.FC = () => {
                       onChange={(e) => handleStatusChange(ord.id, e.target.value as OrderStatus)}
                     >
                       <option value="pending">অপেক্ষমান (Pending)</option>
-                      <option value="processing">প্রক্রিয়াধীন (Processing)</option>
-                      <option value="shipped">শিপিং-এ আছে (Shipped)</option>
+                      <option value="preparing">প্রস্তুত হচ্ছে (Preparing)</option>
+                      <option value="ready_for_dispatch">প্রেরণে প্রস্তুত</option>
+                      <option value="assigned">রাইডার অ্যাসাইনকৃত</option>
+                      <option value="out_for_delivery">ডেলিভারির পথে (Out for Delivery)</option>
+                      <option value="handed_over">পণ্য হস্তান্তরিত (Handed Over)</option>
+                      <option value="receipt_confirmed">গ্রাহক নিশ্চিতকৃত (Receipt Confirmed)</option>
                       <option value="delivered">ডেলিভার্ড (Delivered)</option>
+                      <option value="delivery_issue">ডেলিভারি সমস্যা (Issue Reported)</option>
                       <option value="cancelled">বাতিল (Cancelled)</option>
                     </select>
                   </td>

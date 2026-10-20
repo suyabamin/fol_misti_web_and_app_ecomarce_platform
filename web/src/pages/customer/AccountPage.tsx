@@ -131,6 +131,22 @@ export const AccountPage: React.FC = () => {
             </Link>
 
             <Link
+              to="/account/archive"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem',
+                padding: '0.65rem 1rem',
+                borderRadius: 'var(--radius-md)',
+                color: 'var(--color-text)',
+                fontWeight: 600,
+                fontSize: '0.95rem'
+              }}
+            >
+              <CheckCircle size={18} style={{ color: '#16a34a' }} /> স্থায়ী অর্ডার আর্কাইভ
+            </Link>
+
+            <Link
               to="/wishlist"
               style={{
                 display: 'flex',

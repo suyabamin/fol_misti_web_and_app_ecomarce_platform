@@ -25,12 +25,35 @@ export const LoginPage: React.FC = () => {
       await login(email, password);
       if (email === 'admin@folmishti.com') {
         navigate('/admin');
+      } else if (email === 'delivery@folmishti.com') {
+        navigate('/delivery');
       } else {
         navigate(from, { replace: true });
       }
     } catch (err: any) {
       console.error(err);
       setError(err.message || 'ইমেইল বা পাসওয়ার্ড ভুল হয়েছে।');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDemoLogin = async (demoEmail: string) => {
+    setEmail(demoEmail);
+    setPassword('Password123!');
+    setError(null);
+    setLoading(true);
+    try {
+      await login(demoEmail, 'Password123!');
+      if (demoEmail === 'admin@folmishti.com') {
+        navigate('/admin');
+      } else if (demoEmail === 'delivery@folmishti.com') {
+        navigate('/delivery');
+      } else {
+        navigate('/account');
+      }
+    } catch (err: any) {
+      setError(err.message || 'লগইন ত্রুটি');
     } finally {
       setLoading(false);
     }
@@ -171,8 +194,28 @@ export const LoginPage: React.FC = () => {
           </Link>
         </div>
 
-        <div style={{ textAlign: 'center', marginTop: '1rem', fontSize: '0.8rem', color: 'var(--color-text-muted)', background: 'var(--color-surface-subtle)', padding: '0.5rem', borderRadius: 'var(--radius-sm)' }}>
-          অ্যাডমিন ডেমো লগইন: <strong>admin@folmishti.com</strong>
+        <div style={{ marginTop: '1.5rem', padding: '1rem', background: 'var(--color-surface-subtle)', borderRadius: 'var(--radius-md)', border: '1px dashed var(--color-border)' }}>
+          <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--color-text-secondary)', marginBottom: '0.5rem', textAlign: 'center' }}>
+            দ্রুত টেস্টিং ডেমো একাউন্ট (১-ক্লিক লগইন):
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+            <button
+              type="button"
+              className="btn btn-outline btn-sm"
+              style={{ fontSize: '0.75rem', justifyContent: 'center' }}
+              onClick={() => handleDemoLogin('admin@folmishti.com')}
+            >
+              🛡️ অ্যাডমিন ডেমো
+            </button>
+            <button
+              type="button"
+              className="btn btn-outline btn-sm"
+              style={{ fontSize: '0.75rem', justifyContent: 'center' }}
+              onClick={() => handleDemoLogin('delivery@folmishti.com')}
+            >
+              🚚 ডেলিভারি রাইডার
+            </button>
+          </div>
         </div>
       </div>
     </div>

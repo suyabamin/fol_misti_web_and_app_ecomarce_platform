@@ -403,3 +403,63 @@ export const INITIAL_STORE_SETTINGS: StoreSettings = {
   freeDeliveryThreshold: 2000,
   isMaintenanceMode: false
 };
+
+export const INITIAL_DELIVERY_PROFILES = [
+  {
+    id: 'delivery-agent-1',
+    uid: 'delivery-agent-1',
+    name: 'মোঃ রফিকুল ইসলাম',
+    phone: '+880 1812-345678',
+    email: 'delivery@folmishti.com',
+    status: 'active' as const,
+    availability: 'available' as const,
+    currentActiveDeliveries: 0,
+    currentActiveOrderId: null,
+    vehicleType: 'motorbike' as const,
+    vehiclePlateNumber: 'ঢাকা মেট্রো-হ ১২-৩৪৫৬',
+    totalCompletedDeliveries: 28,
+    totalEarnedDeliveryCharge: 1680,
+    totalPaidAmount: 1200,
+    outstandingPayableAmount: 480,
+    schedule: {
+      workingDays: [0, 1, 2, 3, 4, 5, 6],
+      startTime: '09:00',
+      endTime: '19:00',
+      breakStartTime: '13:00',
+      breakEndTime: '14:00',
+      isLeaveToday: false,
+      maxActiveDeliveries: 3
+    },
+    createdAt: new Date(Date.now() - 30 * 86400000).toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: 'delivery-agent-2',
+    uid: 'delivery-agent-2',
+    name: 'তানভীর আহমেদ',
+    phone: '+880 1912-876543',
+    email: 'tanvir@folmishti.com',
+    status: 'active' as const,
+    availability: 'available' as const,
+    currentActiveDeliveries: 0,
+    currentActiveOrderId: null,
+    vehicleType: 'bicycle' as const,
+    vehiclePlateNumber: 'বাইসাইকেল (উত্তরা জোন)',
+    totalCompletedDeliveries: 15,
+    totalEarnedDeliveryCharge: 900,
+    totalPaidAmount: 900,
+    outstandingPayableAmount: 0,
+    schedule: {
+      workingDays: [1, 2, 3, 4, 5, 6],
+      startTime: '10:00',
+      endTime: '20:00',
+      breakStartTime: '14:00',
+      breakEndTime: '15:00',
+      isLeaveToday: false,
+      maxActiveDeliveries: 2
+    },
+    createdAt: new Date(Date.now() - 20 * 86400000).toISOString(),
+    updatedAt: new Date().toISOString()
+  }
+];
+

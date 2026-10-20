@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
-import { Search, PackageCheck, Truck, CheckCircle2, Clock, AlertCircle, XCircle } from 'lucide-react';
+import { Search, PackageCheck, Truck, CheckCircle2, Clock, AlertCircle, XCircle, ArrowRight } from 'lucide-react';
 import { orderRepository } from '../../repositories/orderRepository';
 import { Order, OrderStatus } from '../../models';
+import { LiveOrderTrackingMap } from '../../components/LiveOrderTrackingMap';
 
 export const OrderTrackingPage: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -207,6 +208,38 @@ export const OrderTrackingPage: React.FC = () => {
             <div style={{ background: '#fee2e2', color: '#dc2626', padding: '1rem', borderRadius: 'var(--radius-md)', textAlign: 'center', marginBottom: '2rem', fontWeight: 700 }}>
               <XCircle size={20} style={{ verticalAlign: 'middle', marginRight: '0.5rem' }} />
               এই অর্ডারটি বাতিল করা হয়েছে।
+            </div>
+          )}
+
+          {/* Live GPS Tracking Map */}
+          {searchedOrder.status !== 'cancelled' && (
+            <div style={{ marginBottom: '2rem' }}>
+              <LiveOrderTrackingMap
+                orderId={searchedOrder.id}
+                orderNumber={searchedOrder.orderNumber}
+                deliveryStatus={searchedOrder.status}
+                assignedRiderName={searchedOrder.assignedDeliveryPersonName || undefined}
+                assignedRiderPhone={searchedOrder.assignedDeliveryPersonPhone || undefined}
+                customerAddress={`${searchedOrder.deliveryAddress.address}, ${searchedOrder.deliveryAddress.district}`}
+              />
+            </div>
+          )}
+
+          {/* Handover Notice link */}
+          {searchedOrder.status === 'handed_over' && (
+            <div style={{ background: 'var(--color-primary-light)', border: '1px solid var(--color-primary)', borderRadius: 'var(--radius-lg)', padding: '1.25rem', marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+              <div>
+                <strong style={{ color: 'var(--color-primary)', fontSize: '1rem', display: 'block' }}>
+                  পণ্য হস্তান্তর সম্পন্ন হয়েছে!
+                </strong>
+                <span style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)' }}>
+                  অনুগ্রহ করে পণ্য বুঝে নিয়ে নিশ্চিতকরণ করুন।
+                </span>
+              </div>
+              <Link to={`/order/${searchedOrder.id}`} className="btn btn-primary btn-sm" style={{ gap: '0.35rem' }}>
+                <span>রিসিভ নিশ্চিত করুন</span>
+                <ArrowRight size={14} />
+              </Link>
             </div>
           )}
 

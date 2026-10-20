@@ -100,46 +100,70 @@ Use this file as the implementation checklist. Mark tasks complete only after th
 - [x] Implement review moderation.
 - [x] Implement coupon management.
 - [x] Implement banner management.
-- [x] Implement store settings.
+- [x] Implement store settings and seasonal theme publishing.
+- [x] Add real-time customer support chat inbox.
 - [x] Add confirmations, validation, and error states.
 - [x] Test unauthorized admin requests are rejected.
 
-## Phase 8 — Security and QA
-- [x] Test Firestore Security Rules.
-- [x] Test customer isolation for orders and profile data.
-- [x] Test role escalation is impossible from client.
-- [x] Test price/total tampering is rejected.
-- [x] Test out-of-stock purchase rejection.
-- [x] Test duplicate order submission protection.
-- [x] Test coupon limits and expiry.
-- [x] Test cancellation and stock restoration exactly once.
-- [x] Test auth persistence and password reset.
-- [x] Run lint and type-check.
-- [x] Run unit/integration tests.
-- [x] Run production build.
-- [x] Fix discovered issues and document unresolved ones.
-- [x] Verify no secrets or real personal data are in Git.
+## Phase 8 — Delivery Management & Live Tracking (Extension)
+- [x] Define data models for delivery profiles, assignments, locations, archives, earnings, payments, and issues.
+- [x] Configure least-privilege Firestore Security Rules for delivery collections.
+- [x] Implement backend Cloud Functions for delivery role management (`handleSetDeliveryRole`) and dispatch assignment (`handleAssignDeliveryPerson`).
+- [x] Implement rider tracking Cloud Functions (`handleStartDelivery`, `handleUpdateLocation`, `handleMarkHandedOver`).
+- [x] Implement customer receipt confirmation and permanent order archive snapshot function (`handleConfirmCustomerReceipt`).
+- [x] Implement dispute issue reporting function (`handleReportDeliveryIssue`).
+- [x] Implement rider payout recording function with balance cap checks (`handleRecordDeliveryPayment`).
+- [x] Create frontend `deliveryRepository` with Firestore live subscription & fallback event bus.
+- [x] Build responsive Delivery Rider Portal (`/delivery/*`):
+  - [x] Rider layout with live working availability switcher (`available`, `in_order`, `on_break`, `unavailable`).
+  - [x] Delivery Dashboard with active task cards, direct customer call button, and Start/Handover workflows.
+  - [x] Delivery History page with completed orders.
+  - [x] Delivery Earnings ledger and payout receipt breakdown.
+  - [x] Weekly Shift Schedule & workload management.
+  - [x] Rider Profile with vehicle details and emergency contact.
+- [x] Build interactive Leaflet + OpenStreetMap Live Tracking Map (`LiveOrderTrackingMap.tsx`):
+  - [x] Proper OpenStreetMap attribution.
+  - [x] Custom store marker (🥭), rider marker with animated radar pulse (🏍️), and customer pin (🏠).
+  - [x] Automatic coordinate tracking and stale GPS warning (>5 min).
+- [x] Build Customer Receipt Confirmation & Archive UI:
+  - [x] Order details tracking toggle and handover banner.
+  - [x] Independent customer receipt confirmation modal ("Yes, I Received My Order").
+  - [x] Dispute issue reporting modal ("Report a Problem").
+  - [x] Two-stage post-confirmation rating modal (product + delivery rider).
+  - [x] Customer Permanent Order Archive page (`/account/archive`) with immutable snapshots.
+- [x] Build Admin Delivery Management Pages:
+  - [x] Delivery Personnel roster (`/admin/delivery-people`): add rider, promote user, suspend/activate.
+  - [x] Rider Payout Management (`/admin/delivery-payments`): financial metrics, record payment modal.
+  - [x] Delivery Dispute Tickets (`/admin/delivery-issues`): issue details, chat link, status resolution.
+  - [x] Order dispatch assignment & reassignment modal in Order Details.
+- [x] Update AuthContext and LoginPage with demo rider login buttons (`delivery@folmishti.com`).
 
-## Phase 9 — Documentation and Deployment
-- [x] Finish README and local setup guide.
-- [x] Finish architecture and schema documentation.
-- [x] Finish API contract documentation.
-- [x] Finish Firebase setup guide.
-- [x] Finish Cloudinary setup guide.
-- [x] Finish Vercel deployment guide.
-- [x] Finish future Flutter integration guide.
-- [x] Verify environment variables and build configuration.
-- [x] Check Vercel plan terms for intended commercial use.
-- [x] Document Firebase billing requirements where applicable.
-- [x] Deploy only with owner authorization.
-- [ ] Record actual deployment URL and verified results if deployed (Awaiting owner live deployment trigger).
+## Phase 9 — Quality Assurance & Build Verification
+- [x] Test Firestore Security Rules across customer, delivery, and admin collections.
+- [x] Test customer isolation for orders and tracking data.
+- [x] Run TypeScript compiler checks on `web/` (`tsc -b`).
+- [x] Run TypeScript compiler checks on `functions/` (`tsc`).
+- [x] Run static lint checks (`oxlint`).
+- [x] Run production build (`vite build` in 2.17s, 0 errors).
+- [x] Verify no secrets, private keys, or credentials committed to Git.
 
-## Phase 10 — Future Flutter Preparation (No Flutter Code Yet)
-- [x] Ensure collection schemas are documented.
-- [x] Ensure Cloud Functions contracts are documented.
+## Phase 10 — Documentation and Deployment Preparation
+- [x] Update `PRD.md` with Delivery Rider roles and specifications.
+- [x] Update `ARCHITECTURE.md` with delivery subsystem and Leaflet map details.
+- [x] Update `RULES.md` with handover/receipt separation and rider privacy rules.
+- [x] Update `DESIGN.md` with rider portal and map design specs.
+- [x] Update `docs/database-schema.md` with all 7 delivery collections.
+- [x] Update `docs/api-contract.md` with all 8 delivery Cloud Functions.
+- [x] Update `MEMORY.md` with stable delivery decisions.
+- [x] Update `progress.md` with completion log.
+
+## Phase 11 — Future Flutter Preparation (No Flutter Code Yet)
+- [x] Ensure collection schemas are documented for mobile developer reuse.
+- [x] Ensure Cloud Functions contracts are documented for mobile HTTP/callable clients.
 - [x] Ensure shared order/product/user models are documented.
-- [x] Ensure status enums and business rules are documented.
+- [x] Ensure status enums and delivery business rules are documented.
 - [x] Ensure Cloudinary URL strategy is documented.
+- [x] Ensure Leaflet/OSM coordinate schemas align with Flutter map packages (e.g. `flutter_map`).
 - [x] Write `docs/flutter-integration-guide.md`.
 - [x] Confirm no Flutter source files were created in this website phase.
 

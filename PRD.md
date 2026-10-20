@@ -47,8 +47,23 @@
 - Moderate reviews
 - Manage coupons, banners, and store settings
 - View operational dashboard summaries
+- Register and promote delivery personnel, configure shifts and workload limits
+- Assign and reassign orders with conflict checks and audit logs
+- Record delivery rider payouts against verified balances
+- Investigate and resolve customer delivery dispute tickets
 
-Admin privileges must be enforced on the server, not merely by hiding frontend routes.
+### Delivery Person
+- Access a dedicated delivery rider portal (`/delivery/*`)
+- Update working availability status (`available`, `in_order`, `on_break`, `unavailable`)
+- Manage weekly work schedule, shifts, and leave status
+- View assigned deliveries and phone customer directly via one-click call
+- Start delivery and transmit live GPS coordinates to customer tracking map
+- Mark order handed over with recipient name and handover notes
+- View completed delivery history
+- Inspect earnings ledger, base fees, bonuses, tips, and payout receipts
+- Update vehicle profile (motorbike, bicycle, van, walking) and contact info
+
+Admin privileges and Delivery Person roles must be enforced on the server, not merely by hiding frontend routes.
 
 ## 5. Customer Pages
 - Home
@@ -69,7 +84,8 @@ Admin privileges must be enforced on the server, not merely by hiding frontend r
 - Account/profile
 - Address management
 - My orders
-- Order details
+- Order details (with live map & handover confirmation)
+- Permanent order archive (`/account/archive`)
 - Reviews and ratings
 - Offers and coupons
 - About us
@@ -86,12 +102,22 @@ Admin privileges must be enforced on the server, not merely by hiding frontend r
 - Dashboard
 - Product management
 - Category management
-- Order management
+- Order management & dispatch assignment
+- Delivery personnel management (`/admin/delivery-people`)
+- Delivery payments & payouts (`/admin/delivery-payments`)
+- Delivery issues & dispute tickets (`/admin/delivery-issues`)
 - Customer management
 - Review moderation
 - Coupon management
 - Banner management
-- Store settings
+- Store settings & appearance themes
+
+## 6.1 Delivery Rider Pages (`/delivery/*`)
+- Rider dashboard & active deliveries (`/delivery`)
+- Delivery history (`/delivery/history`)
+- Earnings ledger & payout receipts (`/delivery/earnings`)
+- Weekly schedule & shift management (`/delivery/schedule`)
+- Rider profile & vehicle details (`/delivery/profile`)
 
 ## 7. Functional Requirements
 ### Product discovery
@@ -117,6 +143,19 @@ Admin privileges must be enforced on the server, not merely by hiding frontend r
 - Show the canonical order ID and confirmation only after backend success.
 - Track order status based on trusted stored data.
 - Cancellation must follow documented business rules and stock-restoration policy.
+
+### Delivery Management and Live Tracking
+- Admin can assign available delivery riders to ready orders.
+- Rider reassignment invalidates previous rider tracking sessions and records audit logs.
+- Real-time GPS location updates from riders using browser Geolocation API into `/deliveryLocations/{orderId}`.
+- Live customer order map using Leaflet and OpenStreetMap tiles displaying Store, Rider (with radar pulse), and Customer delivery pin.
+- Stale location detection alert if rider GPS has not updated for >5 minutes.
+- **Strict Handover vs. Confirmation Separation:** Rider marking "Handed Over" does not count as customer receipt. Order remains in `handed_over` status until customer independently confirms receipt ("Yes, I Received My Order") or disputes delivery ("Report a Problem").
+- Customer receipt confirmation triggers:
+  1. Permanent immutable snapshot in `/orderArchives/{orderId}`.
+  2. Idempotent creation of rider earnings ledger entry in `/deliveryEarnings/{orderId}`.
+  3. Post-confirmation 2-way rating eligibility (product rating + delivery rider rating).
+- Admin payment recording (`/deliveryPayments`) allows recording payouts to riders, strictly capped to current payable balance.
 
 ### Authentication
 - Email/password registration and login
@@ -160,6 +199,13 @@ Required initial Firestore collections:
 - `banners`
 - `settings`
 - `wishlists`
+- `deliveryProfiles`
+- `deliveryAssignments`
+- `deliveryLocations`
+- `orderArchives`
+- `deliveryEarnings`
+- `deliveryPayments`
+- `deliveryIssues`
 
 Additional collections may be introduced when justified and documented.
 

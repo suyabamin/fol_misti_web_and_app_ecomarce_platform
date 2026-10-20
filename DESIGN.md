@@ -14,9 +14,7 @@ The experience should feel fresh, warm, trustworthy, modern, and locally relevan
 - Use clear price, unit, stock, delivery, and CTA information.
 - Use responsive layouts rather than shrinking desktop layouts on mobile.
 
-## 3. Suggested Color Tokens
-Treat these as initial design tokens; adjust only if a supplied reference design requires it.
-
+## 3. Color Tokens
 ```css
 :root {
   --color-brand: #18794E;
@@ -39,135 +37,47 @@ Treat these as initial design tokens; adjust only if a supplied reference design
 ```
 
 ## 4. Typography
-- Use a Bengali-capable font, such as Hind Siliguri or Noto Sans Bengali, with suitable fallbacks.
-- Use a clean sans-serif for English.
-- Define a consistent type scale for display headings, page headings, section headings, body text, captions, and labels.
-- Keep body text comfortable to read; do not use tiny text for prices or important actions.
-- Verify Bengali glyphs on Windows, Android browsers, and common mobile sizes.
+- Use Bengali font (Hind Siliguri / Noto Sans Bengali) with system fallbacks.
+- Clean sans-serif for numbers and English text.
+- Consistent type scale: Display (32px), H1 (24-28px), H2 (20-22px), Body (15-16px), Caption (13px), Small (11-12px).
+- Legible Bengali numerals (১, ২, ৩...) and English numbers.
 
 ## 5. Layout and Spacing
-Use a consistent spacing scale, for example 4, 8, 12, 16, 24, 32, 48, and 64 px.
-- Set a readable maximum content width.
-- Use consistent page gutters.
-- Keep product grids responsive.
-- Ensure sticky headers do not obscure page content.
-- Respect mobile safe areas where applicable.
+- Spacing scale: 4, 8, 12, 16, 24, 32, 48, 64 px.
+- Max content width: 1200px.
+- Responsive gutters: 16px on mobile, 24px on tablet, 32px on desktop.
 
 ## 6. Shared Components
-Create reusable components for:
-- Announcement bar
-- Header and navigation
-- Mobile navigation/menu
-- Search field
-- Category tile
-- Product card
-- Price display
-- Stock badge
-- Quantity selector
-- Rating display
-- Coupon input
-- Cart item
-- Address form
-- Order status badge
-- Pagination/load more
-- Breadcrumbs
-- Modal/dialog
-- Toast/alert
-- Skeleton/loading state
-- Empty state
-- Error state
-- Footer
-- Admin sidebar/header
-- Admin data table and filters
+- Header and navigation with Bangla/English text
+- Live customer chat floating widget
+- Product cards with seasonal tags and price per unit
+- Order status badges: `pending`, `preparing`, `ready_for_dispatch`, `assigned`, `out_for_delivery`, `handed_over`, `receipt_confirmed`, `delivery_issue`, `cancelled`
+- Plain CSS3 modal dialogs and alert banners
 
-## 7. Customer Website Structure
-### Header
-- Brand mark and Bengali/English name
-- Main navigation
-- Search
-- Account
-- Wishlist
-- Cart count
-- Responsive mobile menu
+## 7. Delivery Portal Design (`/delivery/*`)
+- **Header with Live Working Status Pill:** Delivery rider can toggle between `available` (green), `in_order` (amber), `on_break` (blue), and `unavailable` (gray) at any time.
+- **Mobile-First Rider Navigation:** Sticky top bar with quick-switch tabs: Active Tasks, History, Earnings, Schedule, Profile.
+- **Active Task Cards:** Customer name, phone call shortcut (`tel:01...`), delivery address, COD collection amount, and 2 prominent action buttons:
+  - "Start Delivery" (initiates GPS watch).
+  - "Mark Handed Over" (modal with recipient name and notes).
+- **Earnings Ledger View:** Summary cards (Net Earned, Paid Out, Payable Balance) and itemized delivery fee ledger.
 
-### Home
-- Hero section with a clear shopping CTA
-- Featured categories
-- Seasonal products
-- Featured fruits and sweets
-- Offers/banners loaded from backend
-- Trust/delivery information
-- Footer with policies and contact details
+## 8. Interactive Map Design (Leaflet + OpenStreetMap)
+- Container: Border radius 14px, subtle border, min-height 380px, responsive 100% width.
+- Tile Layer: OpenStreetMap with clean, standard tiles and obligatory attribution at bottom right (`© OpenStreetMap contributors`).
+- Custom Leaflet DivIcons:
+  - **Store Marker:** Green badge with 🥭 icon and "ফল মিষ্টি হাব" label.
+  - **Rider Marker:** Circular badge with 🏍️ icon and an expanding semi-transparent CSS radar pulse animation (`@keyframes pulse-radar`) to indicate active live movement.
+  - **Customer Destination:** Orange pin with 🏠 icon and customer recipient name.
+- Stale GPS Notification Banner: Yellow warning ribbon rendered above map if rider coordinates have not refreshed in >5 minutes.
 
-### Shop and category pages
-- Clear page title and breadcrumb
-- Search/filter/sort controls where supported
-- Responsive product grid
-- Loading skeletons
-- Empty and error states
+## 9. Handover, Receipt Confirmation & Rating Modals
+- **Handover Notification Banner:** Displayed on Order Details and Order Tracking pages when status is `handed_over`. Informs customer that the rider has marked package delivered, prompting customer confirmation.
+- **"Yes, I Received My Order" Action:** Primary green CTA button opening quick confirmation modal.
+- **"Report a Problem" Action:** Secondary red/amber text button opening dispute reporting modal with issue type selector (`missing_items`, `damaged_goods`, `wrong_order`, `rider_did_not_arrive`, `other`).
+- **Post-Confirmation Rating Dialog:** Two-stage 5-star rating for:
+  1. Product quality (1 to 5 stars).
+  2. Delivery rider speed and courtesy (1 to 5 stars).
 
-### Product details
-- Image gallery
-- Product name and unit
-- Price and optional previous price
-- Availability/stock status
-- Description
-- Quantity selector
-- Add-to-cart CTA
-- Rating/review section
-- Related products where available
-
-### Cart and checkout
-- Clear itemized summary
-- Quantity controls and removal
-- Delivery/contact form
-- Coupon validation feedback
-- Delivery fee and final total
-- COD method clearly identified
-- Disable repeated submissions while processing
-- Show confirmation only after successful backend response
-
-### Account and orders
-- Clear account navigation
-- Order history with readable statuses
-- Order details and status history
-- Friendly empty states
-
-## 8. Admin Design
-- Separate admin layout
-- Sidebar navigation on wide screens and suitable mobile navigation
-- Dashboard summary cards
-- Tables with pagination and filters
-- Clear create/edit forms
-- Confirmation for destructive actions
-- Visible validation errors
-- Loading and empty states
-- Do not rely on color alone to convey status
-
-## 9. Responsive Behavior
-- Mobile-first CSS
-- Avoid horizontal overflow
-- Product grid columns adapt to viewport width
-- Tables may scroll horizontally or switch to cards on narrow screens
-- Forms use comfortable touch targets
-- Navigation and dialogs work with keyboard and touch
-- Test at small mobile, large mobile, tablet, laptop, and wide desktop sizes
-
-## 10. Accessibility
-- Semantic HTML
-- Labels for all form controls
-- Useful alt text for product images
-- Visible keyboard focus
-- Keyboard-operable menus and dialogs
-- Sufficient color contrast
-- Respect reduced-motion preferences
-- Do not communicate errors or status by color alone
-
-## 11. Motion and Feedback
-Use restrained transitions for hover, focus, cart updates, and menus. Avoid distracting animations. All actions should have visible feedback, and async actions should show progress.
-
-## 12. Design Reference Images
-If the owner supplies a screenshot, extract its layout, palette, typography, spacing, card shapes, and interaction patterns. Treat it as a reference, not as permission to remove required accessibility or responsive behavior.
-
-## 13. Future Flutter Consistency
-Document design tokens and reusable component intent so the future Flutter app can reproduce the same brand. The app must implement its UI with Flutter widgets, not embed the website in a WebView.
+## 10. Future Flutter Consistency
+All UI components use design tokens matching the web implementation. When the native Flutter mobile app is created, these exact hex codes, spacing increments, and typography scales will be converted directly into Flutter `ThemeData` and custom widget themes.

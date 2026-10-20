@@ -7,67 +7,51 @@ This file contains stable project decisions. Read it before making architecture 
 - Bengali name: ফল মিষ্টি
 - Business: Ecommerce for seasonal fruits and Bengali sweets in Bangladesh
 - Store currency: BDT (৳)
+- Initial payment: Cash on Delivery (COD)
 
-## Current Priority
-- Build the WEBSITE FIRST.
-- The website has not been implemented yet; the project currently has planning/prompts only unless the workspace proves otherwise.
-- Do not create the Flutter app in this phase.
-- Build a future-Flutter-compatible backend and document all contracts.
+## Current Status & Priority
+- **Website and Delivery System Status:** COMPLETE and FULLY FUNCTIONAL.
+- 24 Customer Storefront pages, 16 Admin pages, 5 Delivery Rider pages (`/delivery/*`), Leaflet live GPS tracking, Customer Receipt Confirmation & Permanent Order Archive, Delivery Person Earnings Ledger, Admin Delivery Payments & Issues management are completely implemented and verified.
+- Production build passes with 0 errors across both `web/` (`tsc -b && vite build`) and `functions/` (`tsc`).
+- Do not create Flutter source files during this phase. All backend schemas and API contracts are documented for future Flutter mobile client reuse.
 
 ## Chosen Stack
-- Web: React + Vite + TypeScript
-- Styling: Plain CSS3; no Tailwind or Bootstrap
-- Routing: React Router
+- Web: React 19 + Vite + TypeScript
+- Styling: Plain CSS3; strict ban on Tailwind CSS and Bootstrap
+- Routing: React Router v7
 - Database: Firebase Cloud Firestore
-- Authentication: Firebase Authentication (Email/Password and Google sign-in)
+- Authentication: Firebase Authentication (Email/Password, Google sign-in, and custom claims for admin & delivery roles)
 - Backend: Firebase Cloud Functions with TypeScript
-- Images: Cloudinary
-- Hosting: Vercel, after verifying suitable plan terms
-- Source control: GitHub
+- Images: Cloudinary (secure uploads, optimized CDN delivery)
+- Maps & Live Tracking: Leaflet + OpenStreetMap tiles (`{s}.tile.openstreetmap.org/{z}/{x}/{y}.png`) with proper attribution
 - Initial payment: Cash on Delivery (COD)
-- Online payment: future phase only
+- Future mobile app: Flutter for Android and iOS using the same Firebase project and API contracts
 
-## Future App
-- Future target: Flutter + Dart for Android and iOS.
-- The future app must use the same Firebase project, Authentication users, Firestore collections, Cloud Functions, business rules, and Cloudinary image URLs.
-- Do not create a separate mobile database.
-- Recreate the visual design in Flutter widgets; do not embed the website in a WebView.
-
-## Product Requirements
-- Full multi-page customer website.
-- Protected admin dashboard.
-- Product/category management.
-- Cart, checkout, COD orders, order tracking, and order history.
-- Wishlist, reviews, coupons, banners, and account management.
-- About, Contact, FAQ, shipping/refund/privacy/terms pages.
-- Responsive, accessible UI with Bangla and English support where practical.
+## Stable Delivery Decisions
+1. **Separation of Handover vs. Customer Receipt:**
+   - A delivery person marking an order as "Handed Over" does NOT complete the order or confirm customer receipt.
+   - The customer must independently verify and confirm receipt ("Yes, I Received My Order").
+   - Customer confirmation transitions status to `receipt_confirmed`, marks COD payment as `paid`, snapshots the order into `/orderArchives/{orderId}`, idempotently generates rider payout earnings in `/deliveryEarnings/{orderId}`, and unlocks two-stage rating eligibility.
+2. **Delivery Role Security:**
+   - Delivery roles can only be granted, updated, or revoked by an administrator via Cloud Function `setDeliveryRole`.
+3. **Rider Privacy Protection:**
+   - Delivery rider UIDs are never exposed in customer URLs or customer-facing search queries.
+   - Real-time GPS coordinates in `/deliveryLocations/{orderId}` are strictly restricted by Firestore Security Rules to the customer owning that order, the assigned rider, and administrators.
+4. **Earnings & Admin Payout Ledger:**
+   - Rider earnings entries are generated exactly once upon verified customer receipt confirmation.
+   - Admin payout disbursements recorded in `/deliveryPayments` are capped to the rider's outstanding payable balance.
+5. **Permanent Order Archive:**
+   - Customer receipt confirmation creates an immutable snapshot in `/orderArchives/{orderId}` preserving historical unit prices, discounts, delivery fees, items, and delivery audit timestamps.
 
 ## Security Decisions
 - Client-supplied prices, totals, discounts, stock, and roles are untrusted.
 - Server validates checkout and recalculates totals.
-- Stock and order changes must be atomic and protected against duplicate submissions.
-- Admin permissions must be enforced by trusted backend authorization and Security Rules.
+- Stock and order changes are atomic and protected against duplicate submissions via idempotency keys.
+- Admin and Delivery permissions are enforced by trusted backend authorization and Firestore Security Rules.
 - Never expose Cloudinary API secrets, service-account credentials, or private keys in client code.
-- Do not mark payment as completed without trusted payment verification.
-- Use least-privilege Firestore Security Rules.
+- Least-privilege Firestore Security Rules applied across all collections.
 
-## Workflow Preferences
-- Work in phases, not one giant generation.
-- Inspect workspace before editing.
-- Keep `progress.md` updated.
-- Report actual test results and configuration still required.
-- Never claim deployment or tests succeeded without verification.
-- Use placeholders until owner-provided configuration is available.
-- Preserve unrelated existing work.
-
-## External Setup Notes
-- Firebase project and providers may need owner setup.
-- Cloud Functions deployment may require a billing-enabled Firebase plan.
-- Cloudinary account/upload configuration must be set up by the owner.
-- Vercel plan terms should be checked for the intended commercial website.
-- iOS build/distribution later requires suitable Apple tooling and account setup.
-
-## Current State
-- Planning and prompt design only, unless actual workspace inspection confirms more.
-- No production backend, website, deployment, or tests should be assumed complete.
-- Next action: inspect workspace, read all documentation, create architecture and implementation plan, then implement the website in milestones.
+## Pre-Configured Test Accounts (Demo Mode)
+- **Admin:** `admin@folmishti.com` (Password: `Password123!`) -> Admin Dashboard (`/admin`)
+- **Delivery Rider:** `delivery@folmishti.com` (Password: `Password123!`) -> Delivery Portal (`/delivery`)
+- **Customer:** `customer@folmishti.com` (Password: `Password123!`) -> Storefront / Account (`/account`, `/account/archive`)

@@ -35,7 +35,19 @@ export interface Category {
   isActive: boolean;
 }
 
-export type OrderStatus = 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+export type OrderStatus =
+  | 'pending'
+  | 'processing'
+  | 'preparing'
+  | 'ready_for_dispatch'
+  | 'assigned'
+  | 'shipped'
+  | 'out_for_delivery'
+  | 'handed_over'
+  | 'receipt_confirmed'
+  | 'delivered'
+  | 'delivery_issue'
+  | 'cancelled';
 export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded';
 export type PaymentMethod = 'cod';
 
@@ -85,6 +97,16 @@ export interface Order {
   appliedCoupon?: string | null;
   statusHistory: StatusHistoryItem[];
   stockRestored?: boolean;
+  assignedDeliveryPersonId?: string | null;
+  assignedDeliveryPersonName?: string | null;
+  assignedDeliveryPersonPhone?: string | null;
+  deliveryAssignedAt?: any;
+  startedAt?: any;
+  handedOverAt?: any;
+  receiptConfirmedAt?: any;
+  deliveryIssueReported?: boolean;
+  deliveryIssueDetails?: string;
+  isArchived?: boolean;
   createdAt: any;
   updatedAt: any;
 }
@@ -94,7 +116,7 @@ export interface UserProfile {
   email: string;
   displayName?: string;
   phone?: string;
-  role: 'customer' | 'admin';
+  role: 'customer' | 'admin' | 'delivery';
   addresses?: DeliveryAddress[];
   createdAt?: any;
   updatedAt?: any;
@@ -196,4 +218,153 @@ export interface DeliveryArea {
 export interface CartItem {
   product: Product;
   quantity: number;
+}
+
+// -------------------------------------------------------------
+// Delivery Management & Tracking Types
+// -------------------------------------------------------------
+
+export type DeliveryAvailabilityStatus = 'available' | 'in_order' | 'unavailable' | 'on_break';
+export type DeliveryAccountStatus = 'active' | 'suspended' | 'inactive';
+
+export interface DeliverySchedule {
+  workingDays: number[]; // 0: Sun, 1: Mon, ... 6: Sat
+  startTime: string; // 'HH:mm' e.g. '09:00'
+  endTime: string; // 'HH:mm' e.g. '19:00'
+  breakStartTime?: string; // '13:00'
+  breakEndTime?: string; // '14:00'
+  isLeaveToday?: boolean;
+  maxActiveDeliveries: number; // default 1 or 2
+}
+
+export interface DeliveryProfile {
+  id: string; // matches User UID
+  uid: string;
+  name: string;
+  phone: string;
+  email: string;
+  status: DeliveryAccountStatus;
+  availability: DeliveryAvailabilityStatus;
+  currentActiveDeliveries: number;
+  currentActiveOrderId?: string | null;
+  schedule: DeliverySchedule;
+  vehicleType?: 'bicycle' | 'motorbike' | 'van' | 'walking';
+  vehiclePlateNumber?: string;
+  totalCompletedDeliveries: number;
+  totalEarnedDeliveryCharge: number;
+  totalPaidAmount: number;
+  outstandingPayableAmount: number;
+  createdAt: any;
+  updatedAt: any;
+}
+
+export interface ReassignmentHistoryItem {
+  previousDeliveryPersonId: string;
+  previousDeliveryPersonName: string;
+  reason: string;
+  timestamp: any;
+  reassignedBy: string;
+}
+
+export interface DeliveryAssignment {
+  id: string; // orderId
+  orderId: string;
+  orderNumber: string;
+  deliveryPersonId: string;
+  deliveryPersonName: string;
+  deliveryPersonPhone: string;
+  customerName: string;
+  customerPhone: string;
+  deliveryAddress: DeliveryAddress;
+  status: OrderStatus;
+  deliveryFee: number;
+  assignedAt: any;
+  assignedBy: string;
+  startedAt?: any;
+  handedOverAt?: any;
+  receiptConfirmedAt?: any;
+  reassignmentHistory?: ReassignmentHistoryItem[];
+}
+
+export interface DeliveryLocation {
+  orderId: string;
+  deliveryPersonId: string;
+  latitude: number;
+  longitude: number;
+  heading?: number;
+  speed?: number;
+  accuracy?: number;
+  timestamp: any;
+  status: 'live' | 'stale' | 'offline' | 'ended';
+}
+
+export interface OrderArchive {
+  id: string; // orderId
+  orderId: string;
+  orderNumber: string;
+  userId: string;
+  userEmail: string;
+  items: OrderItem[];
+  subtotal: number;
+  discount: number;
+  deliveryFee: number;
+  total: number;
+  currency: 'BDT';
+  paymentMethod: PaymentMethod;
+  paymentStatus: PaymentStatus;
+  deliveryAddress: DeliveryAddress;
+  deliveryPersonInternalId: string;
+  deliveryPersonName: string;
+  orderDate: any;
+  handoverTimestamp: any;
+  receiptConfirmedTimestamp: any;
+  archivedAt: any;
+  isRated: boolean;
+  productRating?: number;
+  deliveryRating?: number;
+  reviewComment?: string;
+}
+
+export interface DeliveryEarningsEntry {
+  id: string; // e.g. 'earn_{orderId}'
+  orderId: string;
+  orderNumber: string;
+  deliveryPersonId: string;
+  deliveryPersonName: string;
+  amount: number; // in BDT
+  currency: 'BDT';
+  status: 'eligible' | 'paid' | 'disputed' | 'reversed';
+  earnedAt: any;
+  paymentId?: string;
+}
+
+export interface DeliveryPayment {
+  id: string;
+  deliveryPersonId: string;
+  deliveryPersonName: string;
+  amount: number; // in BDT
+  paymentDate: string;
+  paymentMethod: 'bKash' | 'Nagad' | 'Bank Transfer' | 'Cash';
+  transactionReference: string;
+  notes?: string;
+  ledgerEntryIds: string[];
+  status: 'paid' | 'reversed';
+  recordedBy: string;
+  createdAt: any;
+}
+
+export interface DeliveryIssue {
+  id: string;
+  orderId: string;
+  orderNumber: string;
+  userId: string;
+  customerName: string;
+  customerPhone: string;
+  deliveryPersonId?: string;
+  deliveryPersonName?: string;
+  issueType: 'damaged_product' | 'missing_item' | 'wrong_order' | 'not_delivered' | 'delayed' | 'other';
+  description: string;
+  status: 'open' | 'investigating' | 'resolved';
+  createdAt: any;
+  resolvedAt?: any;
 }

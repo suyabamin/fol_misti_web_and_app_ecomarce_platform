@@ -162,5 +162,18 @@ export const orderRepository = {
 
     saveLocalOrders(list);
     return { success: true, message: 'অর্ডারটি বাতিল করা হয়েছে।' };
+  },
+
+  // Aliases for convenience
+  async getOrders(): Promise<Order[]> {
+    return this.getAll();
+  },
+
+  async getOrderById(orderId: string): Promise<Order | null> {
+    return this.getById(orderId);
+  },
+
+  async updateOrderStatus(orderId: string, status: OrderStatus, note?: string): Promise<void> {
+    return this.updateStatus(orderId, status, note);
   }
 };

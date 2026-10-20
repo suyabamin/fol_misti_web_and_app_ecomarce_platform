@@ -1,12 +1,14 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, sendPasswordResetEmail, signInWithPopup, updateProfile as fbUpdateProfile } from 'firebase/auth';
-import { auth, googleProvider, isFirebaseConfigured } from '../services/firebase';
+import { doc, getDoc } from 'firebase/firestore';
+import { auth, db, googleProvider, isFirebaseConfigured } from '../services/firebase';
 import { UserProfile } from '../models';
 
 interface AuthContextType {
   currentUser: User | null;
   userProfile: UserProfile | null;
   isAdmin: boolean;
+  isDeliveryPerson: boolean;
   loading: boolean;
   login: (email: string, pass: string) => Promise<void>;
   register: (name: string, email: string, pass: string, phone?: string) => Promise<void>;
@@ -24,6 +26,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
+  const [isDeliveryPerson, setIsDeliveryPerson] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
@@ -31,19 +34,59 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const unsubscribe = onAuthStateChanged(auth, async (user) => {
         setCurrentUser(user);
         if (user) {
-          const tokenResult = await user.getIdTokenResult();
-          const adminClaim = Boolean(tokenResult.claims.admin);
+          let adminClaim = false;
+          let deliveryClaim = false;
+
+          try {
+            const tokenResult = await user.getIdTokenResult();
+            adminClaim = Boolean(tokenResult.claims.admin);
+            deliveryClaim = Boolean(tokenResult.claims.delivery);
+          } catch {
+            // ignore
+          }
+
+          if (!adminClaim) {
+            try {
+              const adminSnap = await getDoc(doc(db, 'admins', user.uid));
+              if (adminSnap.exists()) {
+                adminClaim = true;
+              }
+            } catch (err) {
+              console.warn('Admin check fallback error:', err);
+            }
+          }
+
+          if (!adminClaim && !deliveryClaim) {
+            try {
+              const deliverySnap = await getDoc(doc(db, 'deliveryProfiles', user.uid));
+              if (deliverySnap.exists()) {
+                deliveryClaim = true;
+              }
+            } catch (err) {
+              console.warn('Delivery profile check error:', err);
+            }
+          }
+
           setIsAdmin(adminClaim);
+          setIsDeliveryPerson(deliveryClaim);
+
+          const role = adminClaim ? 'admin' : deliveryClaim ? 'delivery' : 'customer';
+          const defaultName = adminClaim
+            ? 'সুপার অ্যাডমিন'
+            : deliveryClaim
+            ? 'ডেলিভারি রাইডার'
+            : 'সম্মানিত গ্রাহক';
 
           setUserProfile({
             uid: user.uid,
             email: user.email || '',
-            displayName: user.displayName || 'সম্মানিত গ্রাহক',
-            role: adminClaim ? 'admin' : 'customer'
+            displayName: user.displayName || defaultName,
+            role
           });
         } else {
           setUserProfile(null);
           setIsAdmin(false);
+          setIsDeliveryPerson(false);
         }
         setLoading(false);
       });
@@ -56,6 +99,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const parsed = JSON.parse(stored);
           setUserProfile(parsed);
           setIsAdmin(parsed.role === 'admin');
+          setIsDeliveryPerson(parsed.role === 'delivery');
           setCurrentUser({
             uid: parsed.uid,
             email: parsed.email,
@@ -82,6 +126,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.setItem(DEMO_USER_KEY, JSON.stringify(adminProfile));
       setUserProfile(adminProfile);
       setIsAdmin(true);
+      setIsDeliveryPerson(false);
       setCurrentUser({
         uid: adminProfile.uid,
         email: adminProfile.email,
@@ -90,10 +135,46 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
 
+    // Special delivery rider login bypass for development/testing
+    if (email === 'delivery@folmishti.com') {
+      const deliveryProfile: UserProfile = {
+        uid: 'delivery-agent-1',
+        email: 'delivery@folmishti.com',
+        displayName: 'মোঃ রফিকুল ইসলাম (Delivery Rider)',
+        role: 'delivery'
+      };
+      localStorage.setItem(DEMO_USER_KEY, JSON.stringify(deliveryProfile));
+      setUserProfile(deliveryProfile);
+      setIsAdmin(false);
+      setIsDeliveryPerson(true);
+      setCurrentUser({
+        uid: deliveryProfile.uid,
+        email: deliveryProfile.email,
+        displayName: deliveryProfile.displayName
+      } as User);
+      return;
+    }
+
     if (isFirebaseConfigured) {
       const cred = await signInWithEmailAndPassword(auth, email, pass);
-      const tokenResult = await cred.user.getIdTokenResult();
-      setIsAdmin(Boolean(tokenResult.claims.admin));
+      let isAdminUser = false;
+      try {
+        const tokenResult = await cred.user.getIdTokenResult();
+        isAdminUser = Boolean(tokenResult.claims.admin);
+      } catch {
+        // ignore
+      }
+      if (!isAdminUser) {
+        try {
+          const adminDoc = await getDoc(doc(db, 'admins', cred.user.uid));
+          if (adminDoc.exists()) {
+            isAdminUser = true;
+          }
+        } catch {
+          // ignore
+        }
+      }
+      setIsAdmin(isAdminUser);
     } else {
       const mockProfile: UserProfile = {
         uid: 'user-' + Date.now(),
@@ -171,6 +252,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setCurrentUser(null);
     setUserProfile(null);
     setIsAdmin(false);
+    setIsDeliveryPerson(false);
   };
 
   const resetPassword = async (email: string) => {
@@ -196,6 +278,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         currentUser,
         userProfile,
         isAdmin,
+        isDeliveryPerson,
         loading,
         login,
         register,

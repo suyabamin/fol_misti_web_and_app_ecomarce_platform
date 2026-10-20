@@ -5,7 +5,19 @@ import { handleCancelOrder } from './orders/cancelOrder';
 import { handleValidateCoupon } from './coupons/validateCoupon';
 import { handlePublishTheme } from './theme/publishTheme';
 import { handleSetAdminRole } from './admin/setAdminRole';
-import { CreateOrderRequest, ThemeId } from './types';
+import { handleSetDeliveryRole, handleAssignDeliveryPerson } from './delivery/manageDelivery';
+import { handleStartDelivery, handleUpdateLocation, handleMarkHandedOver } from './delivery/tracking';
+import { handleConfirmCustomerReceipt, handleReportDeliveryIssue } from './delivery/receiptAndArchive';
+import { handleRecordDeliveryPayment } from './delivery/payments';
+import {
+  CreateOrderRequest,
+  ThemeId,
+  AssignDeliveryRequest,
+  UpdateLocationRequest,
+  ConfirmReceiptRequest,
+  ReportIssueRequest,
+  RecordPaymentRequest
+} from './types';
 
 // Initialize Firebase Admin SDK
 admin.initializeApp();
@@ -107,3 +119,140 @@ export const setAdminRole = functions.https.onCall(async (data: { targetUid: str
     throw new functions.https.HttpsError('internal', error.message);
   }
 });
+
+/**
+ * Callable function to set delivery person role (Admin Only)
+ */
+export const setDeliveryRole = functions.https.onCall(async (data: { targetUid: string; profileData: any }, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'লগইন করা আবশ্যক।');
+  }
+
+  // Check if admin
+  const adminDoc = await admin.firestore().collection('admins').doc(context.auth.uid).get();
+  if (!adminDoc.exists && context.auth.token.admin !== true) {
+    throw new functions.https.HttpsError('permission-denied', 'শুধুমাত্র অ্যাডমিন ডেলিভারি কর্মী নিয়োগ দিতে পারবেন।');
+  }
+
+  try {
+    return await handleSetDeliveryRole(data.targetUid, data.profileData);
+  } catch (error: any) {
+    throw new functions.https.HttpsError('invalid-argument', error.message);
+  }
+});
+
+/**
+ * Callable function to assign or reassign delivery person (Admin Only)
+ */
+export const assignDeliveryPerson = functions.https.onCall(async (data: AssignDeliveryRequest, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'লগইন করা আবশ্যক।');
+  }
+
+  const adminDoc = await admin.firestore().collection('admins').doc(context.auth.uid).get();
+  if (!adminDoc.exists && context.auth.token.admin !== true) {
+    throw new functions.https.HttpsError('permission-denied', 'অ্যাডমিন অনুমতি আবশ্যক।');
+  }
+
+  try {
+    return await handleAssignDeliveryPerson(data, context.auth.uid);
+  } catch (error: any) {
+    throw new functions.https.HttpsError('failed-precondition', error.message);
+  }
+});
+
+/**
+ * Callable function to start delivery (Delivery Person Only)
+ */
+export const startDelivery = functions.https.onCall(async (data: { orderId: string }, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'লগইন করা আবশ্যক।');
+  }
+
+  try {
+    return await handleStartDelivery(data.orderId, context.auth.uid);
+  } catch (error: any) {
+    throw new functions.https.HttpsError('failed-precondition', error.message);
+  }
+});
+
+/**
+ * Callable function to update live GPS coordinates (Delivery Person Only)
+ */
+export const updateDeliveryLocation = functions.https.onCall(async (data: UpdateLocationRequest, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'লগইন করা আবশ্যক।');
+  }
+
+  try {
+    return await handleUpdateLocation(data, context.auth.uid);
+  } catch (error: any) {
+    throw new functions.https.HttpsError('invalid-argument', error.message);
+  }
+});
+
+/**
+ * Callable function to mark order as handed over to customer (Delivery Person Only)
+ */
+export const markHandedOver = functions.https.onCall(async (data: { orderId: string }, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'লগইন করা আবশ্যক।');
+  }
+
+  try {
+    return await handleMarkHandedOver(data.orderId, context.auth.uid);
+  } catch (error: any) {
+    throw new functions.https.HttpsError('failed-precondition', error.message);
+  }
+});
+
+/**
+ * Callable function for customer to independently confirm receipt
+ */
+export const confirmCustomerReceipt = functions.https.onCall(async (data: ConfirmReceiptRequest, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'লগইন করা আবশ্যক।');
+  }
+
+  try {
+    return await handleConfirmCustomerReceipt(data, context.auth.uid);
+  } catch (error: any) {
+    throw new functions.https.HttpsError('failed-precondition', error.message);
+  }
+});
+
+/**
+ * Callable function for customer to report delivery problem
+ */
+export const reportDeliveryIssue = functions.https.onCall(async (data: ReportIssueRequest, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'লগইন করা আবশ্যক।');
+  }
+
+  try {
+    return await handleReportDeliveryIssue(data, context.auth.uid);
+  } catch (error: any) {
+    throw new functions.https.HttpsError('invalid-argument', error.message);
+  }
+});
+
+/**
+ * Callable function to record delivery person payment (Admin Only)
+ */
+export const recordDeliveryPayment = functions.https.onCall(async (data: RecordPaymentRequest, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'লগইন করা আবশ্যক।');
+  }
+
+  const adminDoc = await admin.firestore().collection('admins').doc(context.auth.uid).get();
+  if (!adminDoc.exists && context.auth.token.admin !== true) {
+    throw new functions.https.HttpsError('permission-denied', 'শুধুমাত্র অনুমোদিত অ্যাডমিন পেমেন্ট রেকর্ড করতে পারবেন।');
+  }
+
+  try {
+    return await handleRecordDeliveryPayment(data, context.auth.uid);
+  } catch (error: any) {
+    throw new functions.https.HttpsError('failed-precondition', error.message);
+  }
+});
+

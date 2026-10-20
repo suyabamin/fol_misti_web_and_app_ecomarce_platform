@@ -31,11 +31,21 @@ These rules are mandatory unless the project owner explicitly changes them.
 8. Do not leak private user or order data.
 9. Do not use a separate database for the future Flutter app.
 
+## Delivery and Live Tracking Rules
+1. **Handover vs. Confirmation Separation:** A delivery person marking an order "Handed Over" must NEVER be treated as customer receipt confirmation. Customer must independently confirm receipt ("Yes, I Received My Order") or report an issue.
+2. **Delivery Role Escalation Protection:** Users cannot assign themselves delivery roles. Only an authorized administrator can register, promote, or suspend delivery personnel.
+3. **Rider Privacy Protection:** Never expose delivery person IDs as customer-facing search keys or in customer URLs. Delivery rider live GPS coordinates in `/deliveryLocations/{orderId}` must be accessible only to the customer owning that active order, the assigned delivery person, and administrators.
+4. **Free-to-Start Mapping & Leaflet:** Use Leaflet with standard OpenStreetMap tiles (`{s}.tile.openstreetmap.org/{z}/{x}/{y}.png`). Always include proper OpenStreetMap contributors attribution. Provide clean, configurable tile endpoints without proprietary SDK lock-in.
+5. **GPS Coordinate Range Validation:** All location updates must validate that latitude is between -90 and 90, and longitude is between -180 and 180.
+6. **Earnings Ledger Idempotency:** Delivery earnings entries in `/deliveryEarnings` must be generated exactly once upon verified customer receipt confirmation.
+7. **Admin Payout Cap:** Admin payout disbursements recorded in `/deliveryPayments` cannot exceed the rider's current payable balance.
+8. **Permanent Order Archive Immutability:** Customer receipt confirmation snapshots the order into `/orderArchives/{orderId}` to permanently freeze purchase prices, discounts, delivery fees, items, and delivery audit timestamps.
+
 ## Security Rules
 1. Never commit secrets, private keys, service-account files, signing keys, or real customer data.
 2. Never expose Cloudinary API secrets in client code.
-3. Never allow users to set their own admin role.
-4. Enforce admin permissions in trusted backend logic and Security Rules.
+3. Never allow users to set their own admin or delivery role.
+4. Enforce admin and delivery permissions in trusted backend logic and Security Rules.
 5. Restrict customer access to their own private data.
 6. Do not trust client-side route guards as authorization.
 7. Do not mark an order paid without trusted payment verification.

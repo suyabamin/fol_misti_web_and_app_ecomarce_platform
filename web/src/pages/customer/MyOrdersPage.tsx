@@ -26,11 +26,22 @@ export const MyOrdersPage: React.FC = () => {
       case 'pending':
         return <span className="badge badge-warning">অপেক্ষমান (Pending)</span>;
       case 'processing':
-        return <span className="badge badge-info">প্রক্রিয়াধীন (Processing)</span>;
+      case 'preparing':
+        return <span className="badge badge-info">প্রস্তুত হচ্ছে (Preparing)</span>;
+      case 'ready_for_dispatch':
+        return <span className="badge badge-info">প্রেরণে প্রস্তুত</span>;
+      case 'assigned':
+        return <span className="badge badge-primary">রাইডার অ্যাসাইনকৃত</span>;
       case 'shipped':
-        return <span className="badge badge-primary">শিপিং-এ আছে (Shipped)</span>;
+      case 'out_for_delivery':
+        return <span className="badge badge-primary" style={{ background: '#16a34a', color: '#fff' }}>🚚 ডেলিভারির পথে</span>;
+      case 'handed_over':
+        return <span className="badge badge-warning" style={{ background: '#fef3c7', color: '#b45309' }}>📦 হস্তান্তরিত (নিশ্চিত করুন)</span>;
+      case 'receipt_confirmed':
       case 'delivered':
-        return <span className="badge badge-success">ডেলিভার্ড (Delivered)</span>;
+        return <span className="badge badge-success">✅ সম্পন্ন ও নিশ্চিত</span>;
+      case 'delivery_issue':
+        return <span className="badge badge-danger">⚠️ সমস্যা তদন্তাধীন</span>;
       case 'cancelled':
         return <span className="badge badge-danger">বাতিল (Cancelled)</span>;
       default:
@@ -48,9 +59,14 @@ export const MyOrdersPage: React.FC = () => {
         <span className="current">আমার অর্ডারসমূহ</span>
       </div>
 
-      <h1 style={{ fontSize: '2rem', fontWeight: 800, marginBottom: '2rem' }}>
-        আমার অর্ডারসমূহ
-      </h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
+        <h1 style={{ fontSize: '2rem', fontWeight: 800, margin: 0 }}>
+          আমার অর্ডারসমূহ
+        </h1>
+        <Link to="/account/archive" className="btn btn-outline btn-sm" style={{ gap: '0.4rem' }}>
+          <span>🏛️ স্থায়ী অর্ডার আর্কাইভ</span>
+        </Link>
+      </div>
 
       {loading ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>

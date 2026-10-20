@@ -23,7 +23,9 @@ import {
   X,
   Bell,
   ShieldCheck,
-  AlertTriangle
+  AlertTriangle,
+  Truck,
+  Wallet
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import './AdminLayout.css';
@@ -69,6 +71,9 @@ export const AdminLayout: React.FC = () => {
     { to: '/admin/add-product', label: 'নতুন পণ্য যোগ', icon: PlusCircle },
     { to: '/admin/categories', label: 'ক্যাটাগরি', icon: FolderTree },
     { to: '/admin/orders', label: 'অর্ডার তালিকা', icon: ShoppingBag },
+    { to: '/admin/delivery-people', label: 'ডেলিভারি রাইডার্স', icon: Truck },
+    { to: '/admin/delivery-payments', label: 'রাইডার পেমেন্টস', icon: Wallet },
+    { to: '/admin/delivery-issues', label: 'ডেলিভারি সমস্যা', icon: AlertTriangle },
     { to: '/admin/customers', label: 'গ্রাহকবৃন্দ', icon: Users },
     { to: '/admin/reviews', label: 'রিভিউ মডারেশন', icon: Star },
     { to: '/admin/coupons', label: 'কুপন ও অফার', icon: Ticket },

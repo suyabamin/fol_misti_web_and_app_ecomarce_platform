@@ -8,6 +8,7 @@ import { ThemeProvider } from './context/ThemeContext';
 // Layouts
 import { CustomerLayout } from './layouts/CustomerLayout';
 import { AdminLayout } from './layouts/AdminLayout';
+import { DeliveryLayout } from './layouts/DeliveryLayout';
 
 // Customer Pages
 import { HomePage } from './pages/customer/HomePage';
@@ -26,6 +27,7 @@ import { ForgotPasswordPage } from './pages/customer/ForgotPasswordPage';
 import { AccountPage } from './pages/customer/AccountPage';
 import { MyOrdersPage } from './pages/customer/MyOrdersPage';
 import { OrderDetailsPage } from './pages/customer/OrderDetailsPage';
+import { ArchivedOrdersPage } from './pages/customer/ArchivedOrdersPage';
 import { OffersPage } from './pages/customer/OffersPage';
 import { AboutPage } from './pages/customer/AboutPage';
 import { ContactPage } from './pages/customer/ContactPage';
@@ -35,6 +37,13 @@ import { ReturnRefundPage } from './pages/customer/ReturnRefundPage';
 import { PrivacyPolicyPage } from './pages/customer/PrivacyPolicyPage';
 import { TermsPage } from './pages/customer/TermsPage';
 import { NotFoundPage } from './pages/customer/NotFoundPage';
+
+// Delivery Pages
+import { DeliveryDashboardPage } from './pages/delivery/DeliveryDashboardPage';
+import { DeliveryHistoryPage } from './pages/delivery/DeliveryHistoryPage';
+import { DeliveryEarningsPage } from './pages/delivery/DeliveryEarningsPage';
+import { DeliverySchedulePage } from './pages/delivery/DeliverySchedulePage';
+import { DeliveryProfilePage } from './pages/delivery/DeliveryProfilePage';
 
 // Admin Pages
 import { AdminDashboardPage } from './pages/admin/AdminDashboardPage';
@@ -50,6 +59,9 @@ import { AdminBannersPage } from './pages/admin/AdminBannersPage';
 import { AdminAppearancePage } from './pages/admin/AdminAppearancePage';
 import { AdminChatPage } from './pages/admin/AdminChatPage';
 import { AdminDeliveryAreasPage } from './pages/admin/AdminDeliveryAreasPage';
+import { AdminDeliveryPeoplePage } from './pages/admin/AdminDeliveryPeoplePage';
+import { AdminDeliveryPaymentsPage } from './pages/admin/AdminDeliveryPaymentsPage';
+import { AdminDeliveryIssuesPage } from './pages/admin/AdminDeliveryIssuesPage';
 import { AdminReportsPage } from './pages/admin/AdminReportsPage';
 import { AdminStockPage } from './pages/admin/AdminStockPage';
 import { AdminSettingsPage } from './pages/admin/AdminSettingsPage';
@@ -79,6 +91,7 @@ export const App: React.FC = () => {
                   <Route path="register" element={<RegisterPage />} />
                   <Route path="forgot-password" element={<ForgotPasswordPage />} />
                   <Route path="account" element={<AccountPage />} />
+                  <Route path="account/archive" element={<ArchivedOrdersPage />} />
                   <Route path="my-orders" element={<MyOrdersPage />} />
                   <Route path="order/:orderId" element={<OrderDetailsPage />} />
                   <Route path="offers" element={<OffersPage />} />
@@ -108,10 +121,22 @@ export const App: React.FC = () => {
                   <Route path="appearance" element={<AdminAppearancePage />} />
                   <Route path="chat" element={<AdminChatPage />} />
                   <Route path="delivery-areas" element={<AdminDeliveryAreasPage />} />
+                  <Route path="delivery-people" element={<AdminDeliveryPeoplePage />} />
+                  <Route path="delivery-payments" element={<AdminDeliveryPaymentsPage />} />
+                  <Route path="delivery-issues" element={<AdminDeliveryIssuesPage />} />
                   <Route path="reports" element={<AdminReportsPage />} />
                   <Route path="stock" element={<AdminStockPage />} />
                   <Route path="settings" element={<AdminSettingsPage />} />
                   <Route path="profile" element={<AdminProfilePage />} />
+                </Route>
+
+                {/* Delivery Person Portal Routes */}
+                <Route path="/delivery" element={<DeliveryLayout />}>
+                  <Route index element={<DeliveryDashboardPage />} />
+                  <Route path="history" element={<DeliveryHistoryPage />} />
+                  <Route path="earnings" element={<DeliveryEarningsPage />} />
+                  <Route path="schedule" element={<DeliverySchedulePage />} />
+                  <Route path="profile" element={<DeliveryProfilePage />} />
                 </Route>
               </Routes>
             </BrowserRouter>

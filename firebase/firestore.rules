@@ -90,6 +90,80 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // Delivery Profiles collection
+    match /deliveryProfiles/{deliveryPersonId} {
+      allow read: if (isAuthenticated() && request.auth.uid == deliveryPersonId) || isAdmin();
+      // Delivery person can update only permitted fields (schedule, availability)
+      allow update: if (
+        isAuthenticated() &&
+        request.auth.uid == deliveryPersonId &&
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+          'totalEarnedDeliveryCharge',
+          'totalPaidAmount',
+          'outstandingPayableAmount',
+          'status',
+          'uid'
+        ])
+      ) || isAdmin();
+      allow create, delete: if isAdmin();
+    }
+
+    // Delivery Assignments collection
+    match /deliveryAssignments/{orderId} {
+      allow read: if (
+        isAuthenticated() &&
+        (resource.data.deliveryPersonId == request.auth.uid ||
+         get(/databases/$(database)/documents/orders/$(orderId)).data.userId == request.auth.uid ||
+         isAdmin())
+      );
+      allow write: if isAdmin();
+    }
+
+    // Delivery Locations - active live GPS tracking
+    match /deliveryLocations/{orderId} {
+      allow read: if (
+        isAuthenticated() &&
+        (resource.data.deliveryPersonId == request.auth.uid ||
+         get(/databases/$(database)/documents/orders/$(orderId)).data.userId == request.auth.uid ||
+         isAdmin())
+      );
+      // Only the currently assigned active delivery person can update location
+      allow create, update: if (
+        isAuthenticated() &&
+        request.resource.data.deliveryPersonId == request.auth.uid &&
+        get(/databases/$(database)/documents/orders/$(orderId)).data.assignedDeliveryPersonId == request.auth.uid
+      ) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Permanent Order Archives
+    match /orderArchives/{orderId} {
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      // Archives are created through trusted backend or customer receipt confirmation
+      allow create: if isAuthenticated() && (request.resource.data.userId == request.auth.uid || isAdmin());
+      allow update, delete: if isAdmin();
+    }
+
+    // Delivery Earnings Ledger
+    match /deliveryEarnings/{entryId} {
+      allow read: if isAuthenticated() && (resource.data.deliveryPersonId == request.auth.uid || isAdmin());
+      // Ledger writes are strictly managed via Cloud Functions / trusted backend
+      allow write: if isAdmin();
+    }
+
+    // Delivery Payments
+    match /deliveryPayments/{paymentId} {
+      allow read: if isAuthenticated() && (resource.data.deliveryPersonId == request.auth.uid || isAdmin());
+      allow write: if isAdmin();
+    }
+
+    // Delivery Issues
+    match /deliveryIssues/{issueId} {
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isAdmin();
+    }
+
     // Support Conversations - customer owns or admin manages
     match /supportConversations/{convId} {
       allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());

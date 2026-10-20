@@ -8,11 +8,12 @@
 - **Frontend:** React 19 / Vite / TypeScript / Plain CSS3 (Strict: No Tailwind / No Bootstrap)
 - **Backend & DB:** Firebase Authentication, Cloud Firestore, Firebase Cloud Functions (TypeScript)
 - **Media:** Cloudinary (secure upload workflow & metadata store)
+- **Map & Tracking:** Leaflet + OpenStreetMap tiles + Browser Geolocation API
 - **Target Platform:** Desktop, Tablet, Mobile responsive web; prepared for future Flutter app reuse
 
 ---
 
-## Milestone Status
+## Core Milestones
 
 | Milestone | Status | Description |
 |-----------|--------|-------------|
@@ -30,31 +31,41 @@
 
 ---
 
-## Log of Completed Actions
-- [x] Initialized Git repository and created root `.gitignore`
-- [x] Reviewed reference image `media_1792423959910_a8c1561a.jpg` and mapped all customer & admin pages
-- [x] Reviewed `PRD.md`, `ARCHITECTURE.md`, `RULES.md`, `DESIGN.md`, `MEMORY.md`, `skill.md`, `TASKS.md`
-- [x] Built Firebase Security Rules (`firebase/firestore.rules`) with least-privilege customer isolation and admin custom claims
-- [x] Created Firestore composite indexes (`firebase/firestore.indexes.json`) and `firebase.json`
-- [x] Built Firebase Cloud Functions (`functions/`):
-  - `createOrder`: Server-side price recalculation, atomic stock decrement, idempotency keys, coupon discount
-  - `cancelOrder`: Customer/admin authorization, exactly-once stock restoration
-  - `validateCoupon`: Server-side coupon verification (min spend, validity dates, usage limit)
-  - `publishTheme`: Allowlist-validated global theme publishing
-  - `setAdminRole`: Claims setup for administrative users
-- [x] Built Web Application (`web/`):
-  - Configured design tokens and 5 seasonal themes in `variables.css` & `global.css`
-  - Integrated Noto Sans Bengali, Hind Siliguri, and Poppins web fonts
-  - Set up AuthContext (Firebase Auth + demo credentials fallback)
-  - Set up CartContext (guest persistence, server discounts, delivery area rates)
-  - Set up WishlistContext (persistent favorite items)
-  - Set up ThemeContext (real-time seasonal theme listener + live preview mode)
-  - Built customer shell with AnnouncementBar, Header, Navigation, Cart badge, Footer, CustomerLiveChat widget
-  - Built admin shell with Sidebar (A1-A16), Topbar, active badge, and session switcher
-  - Built all 24 customer pages and 16 admin dashboard pages matching visual reference image
-  - Seeded authentic Bangladeshi fruit (Fazli, Himsagar, Amrapali, Haribhanga, Kathal, Lichu, Boroi, Guava) and Bengali sweets (Roshogolla, Chomchom, Kalojam, Sandesh, Kacha Golla, Roshmalai, Mishti Doi, Pantua, Lady Kenny, Mohanbhog)
-- [x] Verified full production builds:
-  - `web/`: `tsc -b && vite build` passed cleanly in ~2.8s
-  - `functions/`: `tsc` passed cleanly with 0 errors
-  - `web/`: `npm run lint` passed with 0 errors
-- [x] Completed all technical documentation in `docs/` and root `README.md`
+## Delivery Management & Live Tracking Milestones
+
+| Phase | Status | Focus Area |
+|-------|--------|------------|
+| **Phase 1** | **Completed** | Documentation review (all 7 Markdown files), codebase audit, planning & progress setup |
+| **Phase 2** | **Completed** | Data models, status lifecycles, Firestore Security Rules, backend types & contracts |
+| **Phase 3** | **Completed** | Delivery-person accounts: registration, promotion, suspension, profile, and auth roles |
+| **Phase 4** | **Completed** | Delivery-person availability & schedule management (shifts, break periods, conflicts) |
+| **Phase 5** | **Completed** | Admin assignment & reassignment workflow with conflict checks & audit trails |
+| **Phase 6** | **Completed** | Live GPS tracking with Leaflet & OSM tiles (authorized updates, real-time customer map) |
+| **Phase 7** | **Completed** | Delivery-person handover vs. customer receipt confirmation & issue reporting |
+| **Phase 8** | **Completed** | Permanent customer order archive snapshots & post-confirmation rating eligibility |
+| **Phase 9** | **Completed** | Delivery charges & earnings ledger, admin payment recording & balance tracking |
+| **Phase 10** | **Completed** | Regression testing, type checking, build verification, and documentation updates |
+
+---
+
+## Log of Actions
+- [x] Read all 7 required project Markdown files (`skill.md`, `PRD.md`, `ARCHITECTURE.md`, `RULES.md`, `DESIGN.md`, `TASKS.md`, `MEMORY.md`)
+- [x] Inspected existing codebase and verified all 24 customer and 16 admin features are intact
+- [x] Installed `leaflet` and `@types/leaflet` without third-party wrapper peer conflicts
+- [x] Extended `OrderStatus` to include `ready_for_dispatch`, `assigned`, `out_for_delivery`, `handed_over`, `receipt_confirmed`, `delivery_issue`
+- [x] Added delivery data models in `web/src/models/index.ts` and `functions/src/types.ts`
+- [x] Configured least-privilege Firestore Security Rules in `firebase/firestore.rules` for all delivery collections
+- [x] Implemented 8 Cloud Functions in `functions/src/delivery/` (`handleSetDeliveryRole`, `handleAssignDeliveryPerson`, `handleStartDelivery`, `handleUpdateLocation`, `handleMarkHandedOver`, `handleConfirmCustomerReceipt`, `handleReportDeliveryIssue`, `handleRecordDeliveryPayment`)
+- [x] Built frontend `deliveryRepository.ts` with Firestore live subscription & fallback event bus
+- [x] Built Delivery Rider Portal layout (`DeliveryLayout.tsx` & `.css`) with live working availability switcher
+- [x] Implemented Delivery Dashboard (`DeliveryDashboardPage.tsx`) with customer call shortcut, Start GPS Delivery, and Handover modal
+- [x] Implemented Delivery History, Earnings Ledger, Weekly Schedule, and Rider Profile pages
+- [x] Implemented Leaflet + OpenStreetMap Live Tracking Map component (`LiveOrderTrackingMap.tsx`) with animated radar pulse and stale GPS alert
+- [x] Implemented Handover notification banner, independent Customer Receipt Confirmation modal, and Dispute Issue reporting modal in `OrderDetailsPage.tsx` and `OrderTrackingPage.tsx`
+- [x] Implemented Two-stage post-confirmation rating dialog (product + rider)
+- [x] Built Permanent Customer Order Archive page (`/account/archive`) displaying immutable historical snapshots
+- [x] Built Admin Delivery Personnel roster (`/admin/delivery-people`), Rider Payments (`/admin/delivery-payments`), and Delivery Issues dispute ticket management (`/admin/delivery-issues`)
+- [x] Built Order dispatch assignment and reassignment modal with schedule validation in `AdminOrderDetailsPage.tsx`
+- [x] Added demo rider login credentials (`delivery@folmishti.com` / `Password123!`) on `LoginPage.tsx`
+- [x] Verified compilation: `web/` (`tsc -b && vite build` in 2.17s) and `functions/` (`tsc`) compile with 0 errors
+- [x] Updated all project documentation (`PRD.md`, `ARCHITECTURE.md`, `RULES.md`, `DESIGN.md`, `TASKS.md`, `MEMORY.md`, `docs/database-schema.md`, `docs/api-contract.md`)
