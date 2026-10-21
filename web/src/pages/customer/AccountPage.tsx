@@ -126,7 +126,7 @@ export const AccountPage: React.FC = () => {
             </button>
 
             <Link
-              to="/my-orders"
+              to="/order-tracking"
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -138,7 +138,7 @@ export const AccountPage: React.FC = () => {
                 fontSize: '0.95rem'
               }}
             >
-              <Package size={18} /> আমার অর্ডারসমূহ ({orders.length})
+              <Package size={18} /> অর্ডার ট্র্যাকিং ও অর্ডারসমূহ ({orders.length})
             </Link>
 
             <Link

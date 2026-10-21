@@ -92,7 +92,7 @@ export const App: React.FC = () => {
                   <Route path="forgot-password" element={<ForgotPasswordPage />} />
                   <Route path="account" element={<AccountPage />} />
                   <Route path="account/archive" element={<ArchivedOrdersPage />} />
-                  <Route path="my-orders" element={<MyOrdersPage />} />
+                  <Route path="my-orders" element={<OrderTrackingPage />} />
                   <Route path="order/:orderId" element={<OrderDetailsPage />} />
                   <Route path="offers" element={<OffersPage />} />
                   <Route path="about" element={<AboutPage />} />
